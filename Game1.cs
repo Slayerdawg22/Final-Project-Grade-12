@@ -15,6 +15,8 @@ namespace Final_Project
 
         Texture2D[] cellSprites;
         Texture2D nucleusSprite;
+        FoodManager foodManager;
+        Texture2D pixel;
 
         Cell cell;
 
@@ -45,6 +47,24 @@ namespace Final_Project
             nucleusSprite = Content.Load<Texture2D>("Cell Textures/nucleus");
 
             cell = new Cell(new Vector2(300, 300), cellSprites, nucleusSprite);
+
+            // create pixel for drawing level1 food
+            pixel = new Texture2D(GraphicsDevice, 1, 1);
+            pixel.SetData(new[] { Color.White });
+
+            // setup food manager
+            foodManager = new FoodManager(GraphicsDevice);
+            // configure asset keys for level 2..4 here. Keep them organized so you can change easily.
+            string[] foodKeys = new string[5];
+            // example: foodKeys[2] = "Food Textures/food_level2";
+            // set these to your actual content asset names
+            foodKeys[2] = "Foods/XFood2"; // replace with actual asset name
+            foodKeys[3] = "Foods/YFood3"; // replace with actual asset name
+            foodKeys[4] = "Foods/YFood4"; // replace with actual asset name
+
+            foodManager.LoadTextures((level) => foodKeys[level], Content);
+            foodManager.TotalCount = 50; // change overall amount here
+            foodManager.GenerateInitial();
         }    
            
             
@@ -56,6 +76,8 @@ namespace Final_Project
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
             cell.Update(gameTime);
+
+            foodManager.Update(gameTime);
 
             // Prevent the cell from leaving the visible screen by clamping its position
             var vp = GraphicsDevice.Viewport;
@@ -75,6 +97,7 @@ namespace Final_Project
 
             _spriteBatch.Begin();
             cell.Draw(_spriteBatch);
+            foodManager.Draw(_spriteBatch, pixel);
             _spriteBatch.End();
             // TODO: Add your drawing code here
 
