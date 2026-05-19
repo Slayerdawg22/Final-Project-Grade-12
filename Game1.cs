@@ -37,9 +37,9 @@ namespace Final_Project
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             cellSprites = new Texture2D[]
             {
-                Content.Load<Texture2D>("Cell Textures/BaseCell1"),
-                Content.Load<Texture2D>("Cell Textures/BaseCell2"),
-                Content.Load<Texture2D>("Cell Textures/BaseCell3")
+                Content.Load<Texture2D>("Cell Textures/Base(1)"),
+                Content.Load<Texture2D>("Cell Textures/Base(2)"),
+                Content.Load<Texture2D>("Cell Textures/Base(3)")
             };
 
             nucleusSprite = Content.Load<Texture2D>("Cell Textures/nucleus");
