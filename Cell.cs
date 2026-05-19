@@ -22,9 +22,10 @@ namespace Final_Project
         public Vector2 Position;
         public Vector2 Velocity;
         public float Speed = 3f;
+        public float Scale = 0.25f;
 
         public Rectangle Bounds =>
-        new Rectangle((int)Position.X, (int)Position.Y, sprites[spriteIndex].Width, sprites[spriteIndex].Height);
+        new Rectangle((int)Position.X, (int)Position.Y, (int)(sprites[spriteIndex].Width * Scale), (int)(sprites[spriteIndex].Height * Scale));
 
         private Nucleus nucleus;
 
@@ -69,7 +70,7 @@ namespace Final_Project
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(sprites[spriteIndex], Position, Color.White);
+            spriteBatch.Draw(sprites[spriteIndex], Position, null, Color.White, 0f, Vector2.Zero, Scale, SpriteEffects.None, 0f);
             nucleus.Draw(spriteBatch);
         }
     }

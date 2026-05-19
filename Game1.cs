@@ -57,6 +57,13 @@ namespace Final_Project
                 Exit();
             cell.Update(gameTime);
 
+            // Prevent the cell from leaving the visible screen by clamping its position
+            var vp = GraphicsDevice.Viewport;
+            cell.Position = new Vector2(
+                Math.Clamp(cell.Position.X, 0, vp.Width - cell.Bounds.Width),
+                Math.Clamp(cell.Position.Y, 0, vp.Height - cell.Bounds.Height)
+            );
+
             // TODO: Add your update logic here
 
             base.Update(gameTime);

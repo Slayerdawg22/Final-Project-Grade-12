@@ -19,6 +19,8 @@ namespace Final_Project
         private Cell parent;
         private Texture2D sprite;
         private float angle = 0f;
+        private float rotationSmoothing = 0.2f; // how quickly the nucleus rotates toward the target
+        private float returnSmoothing = 0.05f; // how quickly the nucleus returns to neutral when stopped
 
         public Nucleus(Cell parentCell, Texture2D nucleusSprite)
         {
@@ -32,7 +34,15 @@ namespace Final_Project
 
             if (v.LengthSquared() > 0.1f)
             {
-                angle = (float)Math.Atan2(v.Y, v.X);
+                float target = (float)Math.Atan2(v.Y, v.X);
+                float diff = MathHelper.WrapAngle(target - angle);
+                angle += diff * rotationSmoothing;
+            }
+            else
+            {
+                // smoothly return to neutral orientation (0 radians) when not moving
+                float diff = MathHelper.WrapAngle(0f - angle);
+                angle += diff * returnSmoothing;
             }
         }
 
@@ -45,6 +55,7 @@ namespace Final_Project
 
             Vector2 origin = new Vector2(sprite.Width / 2, sprite.Height / 2);
 
+            float nucleusScale = parent.Scale * 0.5f;
             spriteBatch.Draw(
             sprite,
             center,
@@ -52,7 +63,7 @@ namespace Final_Project
             Color.White,
             angle,
             origin,
-            1f,
+            nucleusScale,
             SpriteEffects.None,
             0f
             );
