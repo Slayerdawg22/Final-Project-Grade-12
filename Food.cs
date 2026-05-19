@@ -36,7 +36,7 @@ namespace Final_Project
         {
             if (Texture != null)
             {
-                sb.Draw(Texture, Position, null, Color.White, 0f, Vector2.Zero, Scale, SpriteEffects.None, 0f);
+                sb.Draw(Texture, Position, new Rectangle(20,20,20,20), Color.White, 0f, Vector2.Zero, Scale, SpriteEffects.None, 0f);
             }
             else
             {

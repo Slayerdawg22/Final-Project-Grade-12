@@ -15,7 +15,7 @@ namespace Final_Project
         public Texture2D[] LevelTextures = new Texture2D[5];
 
         // weighting for spawn chances (index 1..4)
-        public float[] Weights = new float[] { 0, 0.6f, 0.25f, 0.1f, 0.05f };
+        public float[] Weights = new float[] { 0, 0.8f, 0.25f, 0.1f, 0.05f };
 
         // per-level scale multipliers for textured foods (index 1..4)
         public float[] LevelScales = new float[] { 0, 0.6f, 0.75f, 0.9f, 1f };
