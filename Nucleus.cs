@@ -19,8 +19,8 @@ namespace Final_Project
         private Cell parent;
         private Texture2D sprite;
         private float angle = 0f;
-        private float rotationSmoothing = 0.2f; // how quickly the nucleus rotates toward the target
-        private float returnSmoothing = 0.05f; // how quickly the nucleus returns to neutral when stopped
+        private float rotationSmoothing = 0.2f; 
+        private float returnSmoothing = 0.05f; 
 
         public Nucleus(Cell parentCell, Texture2D nucleusSprite)
         {
@@ -40,7 +40,7 @@ namespace Final_Project
             }
             else
             {
-                // smoothly return to neutral orientation (0 radians) when not moving
+                
                 float diff = MathHelper.WrapAngle(0f - angle);
                 angle += diff * returnSmoothing;
             }

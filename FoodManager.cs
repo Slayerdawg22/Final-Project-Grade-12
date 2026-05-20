@@ -1,8 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+
+
 using System;
 using System.Collections.Generic;
-
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 namespace Final_Project
 {
     public class FoodManager
@@ -47,7 +53,8 @@ namespace Final_Project
             }
         }
 
-        public void GenerateInitial()
+        // now accepts an optional list of obstacle rocks to avoid when placing food
+        public void GenerateInitial(IEnumerable<RockManager.Rock>? obstacles = null)
         {
             Foods.Clear();
             var vp = graphics.Viewport;
@@ -71,7 +78,7 @@ namespace Final_Project
                     }
                 }
 
-                Texture2D tex = null;
+                Texture2D? tex = null;
                 float scale = 1f;
                 int size = BaseSize;
                 if (level >= 2)
@@ -80,6 +87,7 @@ namespace Final_Project
                     scale = LevelScales[level];
                     if (tex != null)
                     {
+                        // keep original size value (used for untextured fallback), drawing uses Scale
                         size = (int)(Math.Min(tex.Width, tex.Height) * scale);
                     }
                 }
@@ -89,15 +97,21 @@ namespace Final_Project
                     size = Math.Max(4, (int)(BaseSize * 0.6f));
                 }
 
+                // compute final placed width/height using Food.GlobalScale so placement matches drawing
+                int placeW = tex != null ? Math.Max(1, (int)(tex.Width * scale * Food.GlobalScale)) : Math.Max(1, (int)(size * Food.GlobalScale));
+                int placeH = tex != null ? Math.Max(1, (int)(tex.Height * scale * Food.GlobalScale)) : Math.Max(1, (int)(size * Food.GlobalScale));
+
                 // pick a non-overlapping position
                 Rectangle placedBounds;
                 Vector2 pos = Vector2.Zero;
                 bool placed = false;
                 for (int attempt = 0; attempt < attemptsLimit; attempt++)
                 {
-                    pos = new Vector2(rng.Next(0, Math.Max(1, vp.Width - size)), rng.Next(0, Math.Max(1, vp.Height - size)));
-                    placedBounds = new Rectangle((int)pos.X, (int)pos.Y, tex != null ? (int)(tex.Width * scale) : size, tex != null ? (int)(tex.Height * scale) : size);
+                    pos = new Vector2(rng.Next(0, Math.Max(1, vp.Width - placeW)), rng.Next(0, Math.Max(1, vp.Height - placeH)));
+                    placedBounds = new Rectangle((int)pos.X, (int)pos.Y, placeW, placeH);
                     bool overlap = false;
+
+                    // check against already placed food
                     foreach (var f in Foods)
                     {
                         if (placedBounds.Intersects(f.Bounds))
@@ -105,20 +119,37 @@ namespace Final_Project
                             overlap = true; break;
                         }
                     }
+
+                    // check against obstacle rocks if provided
+                    if (!overlap && obstacles != null)
+                    {
+                        foreach (var obs in obstacles)
+                        {
+                            if (placedBounds.Intersects(obs.Bounds))
+                            {
+                                overlap = true; break;
+                            }
+                        }
+                    }
+
                     if (!overlap)
                     {
                         placed = true; break;
                     }
                 }
 
-                // even if cannot place perfectly non-overlapping after many attempts, just add it
-                Foods.Add(new Food(pos, level, tex, size, scale));
+                // Only add the food if we successfully found a non-overlapping place
+                if (placed)
+                {
+                    Foods.Add(new Food(pos, level, tex, size, scale));
+                }
+                // if not placed, skip this food (keeps counts possibly lower)
             }
         }
 
         public void Update(GameTime gameTime)
         {
-            // for now food is static, but this is where you'd animate or respawn
+            // for now food is static
         }
 
         public void Draw(SpriteBatch sb, Texture2D pixel)

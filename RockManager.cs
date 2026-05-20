@@ -11,17 +11,18 @@ namespace Final_Project
         private readonly GraphicsDevice graphics;
         private readonly Random rng;
 
-        // textures grouped by type
+        // global draw scale applied to rock textures (0.5 => 50% smaller)
+        public float TextureScale { get; set; } = 0.35f;
+
         public List<Texture2D> MediumTextures { get; } = new List<Texture2D>();
         public List<Texture2D> VerticalTextures { get; } = new List<Texture2D>();
 
         // generated rocks to draw
         public List<Rock> Rocks { get; } = new List<Rock>();
 
-        // how many rocks to draw
+        // how many rocks
         public int DrawCount { get; set; } = 4;
 
-        // probability to pick a medium rock (0..1). vertical probability = 1 - MediumRatio
         public float MediumRatio { get; set; } = 0.6f;
 
         public RockManager(GraphicsDevice gd, int? seed = null)
@@ -30,7 +31,6 @@ namespace Final_Project
             rng = seed.HasValue ? new Random(seed.Value) : new Random();
         }
 
-        // Load texture keys into the manager. Null/empty keys are ignored.
         public void LoadTextures(string[] mediumKeys, string[] verticalKeys, ContentManager content)
         {
             MediumTextures.Clear();
@@ -59,18 +59,18 @@ namespace Final_Project
             }
         }
 
-        // Generate random rocks according to DrawCount and MediumRatio.
-        // Positions are random within the viewport (texture-sized clamped).
         public void GenerateRandom()
         {
             Rocks.Clear();
             var vp = graphics.Viewport;
 
+            int attemptsLimit = 200;
+            int padding = 4; // small spacing so textures don't touch
+
             for (int i = 0; i < DrawCount; i++)
             {
                 bool pickMedium = rng.NextDouble() <= MediumRatio;
 
-                // if chosen list is empty, fallback to the other
                 List<Texture2D> source = pickMedium ? MediumTextures : VerticalTextures;
                 if (source.Count == 0)
                 {
@@ -79,18 +79,49 @@ namespace Final_Project
 
                 if (source.Count == 0)
                 {
-                    // nothing to pick
                     break;
                 }
 
                 var tex = source[rng.Next(source.Count)];
 
-                // place within viewport so entire texture is visible
-                int maxX = Math.Max(1, vp.Width - tex.Width);
-                int maxY = Math.Max(1, vp.Height - tex.Height);
-                var pos = new Vector2(rng.Next(0, maxX), rng.Next(0, maxY));
+                // scaled size used for placement / bounds
+                int scaledW = Math.Max(1, (int)(tex.Width * TextureScale));
+                int scaledH = Math.Max(1, (int)(tex.Height * TextureScale));
 
-                Rocks.Add(new Rock(pos, tex, pickMedium == true));
+                
+                Rectangle placedBounds = Rectangle.Empty;
+                Vector2 pos = Vector2.Zero;
+                bool placed = false;
+
+                for (int attempt = 0; attempt < attemptsLimit; attempt++)
+                {
+                    int maxX = Math.Max(1, vp.Width - scaledW);
+                    int maxY = Math.Max(1, vp.Height - scaledH);
+                    pos = new Vector2(rng.Next(0, maxX), rng.Next(0, maxY));
+                    placedBounds = new Rectangle((int)pos.X - padding, (int)pos.Y - padding, scaledW + padding * 2, scaledH + padding * 2);
+
+                    bool overlap = false;
+                    foreach (var r in Rocks)
+                    {
+                        if (placedBounds.Intersects(r.Bounds))
+                        {
+                            overlap = true;
+                            break;
+                        }
+                    }
+
+                    if (!overlap)
+                    {
+                        placed = true;
+                        break;
+                    }
+                }
+
+                
+                if (placed)
+                {
+                    Rocks.Add(new Rock(pos, tex, pickMedium, TextureScale));
+                }
             }
         }
 
@@ -107,21 +138,29 @@ namespace Final_Project
             public Vector2 Position;
             public Texture2D Texture;
             public bool IsMedium;
+            public float Scale;
 
-            public Rock(Vector2 pos, Texture2D tex, bool isMedium)
+            public Rock(Vector2 pos, Texture2D tex, bool isMedium, float scale)
             {
                 Position = pos;
                 Texture = tex;
                 IsMedium = isMedium;
+                Scale = scale;
             }
 
-            public Rectangle Bounds => new Rectangle((int)Position.X, (int)Position.Y, Texture?.Width ?? 0, Texture?.Height ?? 0);
+            
+            public Rectangle Bounds => new Rectangle(
+                (int)Position.X,
+                (int)Position.Y,
+                Texture != null ? (int)(Texture.Width * Scale) : 0,
+                Texture != null ? (int)(Texture.Height * Scale) : 0
+            );
 
             public void Draw(SpriteBatch sb)
             {
                 if (Texture != null)
                 {
-                    sb.Draw(Texture, Position, null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
+                    sb.Draw(Texture, Position, null, Color.White, 0f, Vector2.Zero, Scale, SpriteEffects.None, 0f);
                 }
             }
         }

@@ -20,7 +20,7 @@ namespace Final_Project
 
         Cell cell;
 
-        // Rock manager + keyboard state for input handling
+
         RockManager rockManager;
         private KeyboardState prevKeyboardState;
 
@@ -33,7 +33,7 @@ namespace Final_Project
 
         protected override void Initialize()
         {
-            // initialize previous keyboard state so we can detect single key presses
+
             prevKeyboardState = Keyboard.GetState();
 
             base.Initialize();
@@ -44,45 +44,48 @@ namespace Final_Project
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             cellSprites = new Texture2D[]
             {
-                    Content.Load<Texture2D>("Cell Textures/Base(1)"),
-                    Content.Load<Texture2D>("Cell Textures/Base(2)"),
-                    Content.Load<Texture2D>("Cell Textures/Base(3)")
+                        Content.Load<Texture2D>("Cell Textures/Base(1)"),
+                        Content.Load<Texture2D>("Cell Textures/Base(2)"),
+                        Content.Load<Texture2D>("Cell Textures/Base(3)")
             };
 
             nucleusSprite = Content.Load<Texture2D>("Cell Textures/nucleus");
 
             cell = new Cell(new Vector2(300, 300), cellSprites, nucleusSprite);
 
-            // create pixel for drawing level1 food
+            // pixel lvl 1 food
             pixel = new Texture2D(GraphicsDevice, 1, 1);
             pixel.SetData(new[] { Color.White });
 
-            // setup food manager
+
             foodManager = new FoodManager(GraphicsDevice);
-            // configure asset keys for level 2..4 here. Keep them organized so you can change easily.
+
             string[] foodKeys = new string[5];
-            
-            foodKeys[2] = "Foods/XFood2"; 
-            foodKeys[3] = "Foods/YFood3"; 
-            foodKeys[4] = "Foods/YFood4"; 
+
+            foodKeys[2] = "Foods/XFood2";
+            foodKeys[3] = "Foods/YFood3";
+            foodKeys[4] = "Foods/YFood4";
 
             foodManager.LoadTextures((level) => foodKeys[level], Content);
             foodManager.TotalCount = 25; // change overall amount here
             foodManager.GenerateInitial();
 
             rockManager = new RockManager(GraphicsDevice);
-            
+
             string[] mediumKeys = new string[] { "Rocks/MedRock(1)", "Rocks/MedRock(2)", "Rocks/MedRock(3)" };
             string[] verticalKeys = new string[] { "Rocks/VertRock(1)", "Rocks/VertRock(2)" };
             rockManager.LoadTextures(mediumKeys, verticalKeys, Content);
 
-            rockManager.DrawCount = 4;      // draw 4 rocks for now
-            rockManager.MediumRatio = 0.6f; // ~60% medium, 40% vertical
+            rockManager.DrawCount = 4;
+            rockManager.MediumRatio = 0.8f; // ~80% medium, 20% vertical
             rockManager.GenerateRandom();
+
+            // now generate food, passing current rocks so food won't spawn on them
+            foodManager.GenerateInitial(rockManager.Rocks);
         }
 
 
-       
+
 
 
         protected override void Update(GameTime gameTime)
@@ -95,13 +98,15 @@ namespace Final_Project
 
             foodManager.Update(gameTime);
 
-            // regenerate rocks when user presses R (single press)
+            // rock testing
             if (rockManager != null && ks.IsKeyDown(Keys.R) && !prevKeyboardState.IsKeyDown(Keys.R))
             {
                 rockManager.GenerateRandom();
+                // regenerate food so it avoids newly placed rocks
+                foodManager.GenerateInitial(rockManager.Rocks);
             }
 
-            // Prevent the cell from leaving the visible screen by clamping its position
+            // clampinf of cell
             var vp = GraphicsDevice.Viewport;
             cell.Position = new Vector2(
                 Math.Clamp(cell.Position.X, 0, vp.Width - cell.Bounds.Width),
@@ -117,11 +122,12 @@ namespace Final_Project
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.DarkBlue);
+           
+            GraphicsDevice.Clear(new Color(2, 13, 58));
 
             _spriteBatch.Begin();
 
-            // draw rocks first (background obstacles), then cell, then food so draw order is clear
+
             rockManager?.Draw(_spriteBatch);
 
             cell.Draw(_spriteBatch);
