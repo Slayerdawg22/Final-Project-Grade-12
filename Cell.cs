@@ -66,10 +66,8 @@ namespace Final_Project
             nucleus.Update(gameTime);
         }
 
-        // Resolve collisions between the circular cell and a set of rectangular obstacles (rocks).
         public void ResolveCollisions(IEnumerable<RockManager.Rock> obstacles)
         {
-            // compute circle center and radius based on current sprite and scale
             var tex = sprites[spriteIndex];
             float w = tex.Width * Scale;
             float h = tex.Height * Scale;
@@ -80,7 +78,6 @@ namespace Final_Project
             {
                 var rect = obs.Bounds;
 
-                // find closest point on AABB to circle center
                 float closestX = MathHelper.Clamp(center.X, rect.Left, rect.Right);
                 float closestY = MathHelper.Clamp(center.Y, rect.Top, rect.Bottom);
                 Vector2 closest = new Vector2(closestX, closestY);
@@ -95,11 +92,8 @@ namespace Final_Project
                         float dist = (float)Math.Sqrt(distSq);
                         float overlap = radius - dist;
                         Vector2 push = diff / dist * overlap;
-                        // move position by push (since Position is top-left, shift by push)
                         Position += push;
-                        // update center for subsequent checks
                         center += push;
-                        // optionally damp velocity to avoid sticking
                         if (Vector2.Dot(Velocity, push) > 0)
                         {
                             Velocity = Vector2.Zero;
@@ -107,13 +101,11 @@ namespace Final_Project
                     }
                     else
                     {
-                        // center lies exactly on closest point (inside rect). Push out along smallest axis
                         float leftOverlap = center.X - rect.Left;
                         float rightOverlap = rect.Right - center.X;
                         float topOverlap = center.Y - rect.Top;
                         float bottomOverlap = rect.Bottom - center.Y;
 
-                        // find minimum penetration direction
                         float min = Math.Min(Math.Min(leftOverlap, rightOverlap), Math.Min(topOverlap, bottomOverlap));
                         Vector2 push = Vector2.Zero;
                         if (min == leftOverlap) push = new Vector2(radius - leftOverlap, 0);

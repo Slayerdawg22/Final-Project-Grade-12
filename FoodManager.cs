@@ -29,7 +29,7 @@ namespace Final_Project
 
         public void LoadTextures(Func<int, string> resolver, Microsoft.Xna.Framework.Content.ContentManager content)
         {
-            // resolver should return the asset key for level n (n >=2)
+            
             for (int i = 2; i <= 4; i++)
             {
                 string key = resolver(i);
@@ -44,19 +44,19 @@ namespace Final_Project
             }
         }
 
-        // now accepts an optional list of obstacle rocks to avoid when placing food
+        
         public void GenerateInitial(IEnumerable<RockManager.Rock>? obstacles = null)
         {
-            // generate within the full viewport and replace Foods
+            
             var vp = graphics.Viewport;
             Foods = GenerateIn(new Rectangle(0, 0, vp.Width, vp.Height), obstacles, TotalCount);
         }
 
-        // generate food inside arbitrary area (world coords). Returns list and does not modify internal Foods.
+       
         public List<Food> GenerateIn(Rectangle area, IEnumerable<RockManager.Rock>? obstacles = null, int count = -1)
         {
             var result = new List<Food>();
-            // normalize weights
+            
             float sum = 0f;
             for (int i = 1; i <= 4; i++) sum += Weights[i];
 
@@ -141,7 +141,6 @@ namespace Final_Project
 
         public void Update(GameTime gameTime)
         {
-            // for now food is static
         }
 
         public void Draw(SpriteBatch sb, Texture2D pixel)

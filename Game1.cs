@@ -78,9 +78,9 @@ namespace Final_Project
 
             rockManager.DrawCount = 6;
             rockManager.MediumRatio = 0.8f;
-            // use chunk manager to create content around the player
+            
             chunkManager = new ChunkManager(rockManager, foodManager, 1024, 1);
-            // ensure initial chunks around the player are populated
+            
             chunkManager.Update(cell.Position);
 
             particleManager = new ParticleManager();
@@ -104,24 +104,20 @@ namespace Final_Project
             if (rockManager != null && ks.IsKeyDown(Keys.R) && !prevKeyboardState.IsKeyDown(Keys.R))
             {
                 rockManager.GenerateRandom();
-                // regenerate food so it avoids newly placed rocks
+                
                 foodManager.GenerateInitial(rockManager.Rocks);
             }
 
-            // update chunks around the player
+
             chunkManager.Update(cell.Position);
 
-            // resolve collisions between cell and rocks from loaded chunks
             cell.ResolveCollisions(chunkManager.GetRocks());
 
-            // update particles
             particleManager.Update(gameTime);
 
-            // check for eating food: if the cell overlaps a food by a small threshold, remove it and spawn particles
             var foodsList = new List<Food>(chunkManager.GetFoods());
-            float eatThreshold = 4f; // pixels of penetration required to count as eaten
+            float eatThreshold = 4f; 
 
-            // compute cell circle
             var cb = cell.Bounds;
             Vector2 cCenter = cell.Position + new Vector2(cb.Width / 2f, cb.Height / 2f);
             float cRadius = Math.Max(cb.Width, cb.Height) * 0.5f;
@@ -129,7 +125,6 @@ namespace Final_Project
             foreach (var f in foodsList)
             {
                 var fb = f.Bounds;
-                // closest point on food rect to circle center
                 float closestX = MathHelper.Clamp(cCenter.X, fb.Left, fb.Right);
                 float closestY = MathHelper.Clamp(cCenter.Y, fb.Top, fb.Bottom);
                 Vector2 closest = new Vector2(closestX, closestY);
@@ -137,13 +132,12 @@ namespace Final_Project
                 float penetration = cRadius - dist;
                 if (penetration >= eatThreshold)
                 {
-                    // spawn particles at food center
                     Vector2 foodCenter = new Vector2(fb.X + fb.Width / 2f, fb.Y + fb.Height / 2f);
                     int count = 6 + f.Level * 4;
                     Color col = f.Level == 1 ? Color.LimeGreen : Color.Gold;
                     particleManager.SpawnAt(foodCenter, count, col, 3f);
 
-                    // remove the food from its chunk
+                    
                     chunkManager.RemoveFood(f);
                 }
             }
@@ -160,18 +154,16 @@ namespace Final_Project
            
             GraphicsDevice.Clear(new Color(2, 13, 58));
 
-            // simple camera: center screen on cell.Position
+            
             var vp = GraphicsDevice.Viewport;
             var camera = Matrix.CreateTranslation(new Vector3(-cell.Position + new Vector2(vp.Width / 2f, vp.Height / 2f), 0f));
 
             _spriteBatch.Begin(transformMatrix: camera);
-            // draw rocks and foods from loaded chunks
             foreach (var r in chunkManager.GetRocks()) r.Draw(_spriteBatch);
             cell.Draw(_spriteBatch);
             foreach (var f in chunkManager.GetFoods()) f.Draw(_spriteBatch, pixel);
             particleManager.Draw(_spriteBatch, pixel);
             _spriteBatch.End();
-            // TODO: Add your drawing code here
 
             base.Draw(gameTime);
         }

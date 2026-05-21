@@ -62,12 +62,12 @@ namespace Final_Project
             Rocks.AddRange(generated);
         }
 
-        // Generate rocks inside an arbitrary area (world coordinates). Returns a list and does not modify internal Rocks.
+        
         public List<Rock> GenerateRocksIn(Rectangle area)
         {
             var result = new List<Rock>();
             int attemptsLimit = 200;
-            int padding = 4; // small spacing so textures don't touch
+            int padding = 4; 
 
             for (int i = 0; i < DrawCount; i++)
             {
@@ -86,7 +86,6 @@ namespace Final_Project
 
                 var tex = source[rng.Next(source.Count)];
 
-                // scaled size used for placement / bounds
                 int scaledW = Math.Max(1, (int)(tex.Width * TextureScale));
                 int scaledH = Math.Max(1, (int)(tex.Height * TextureScale));
 
