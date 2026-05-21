@@ -11,18 +11,13 @@ namespace Final_Project
         private readonly GraphicsDevice graphics;
         private readonly Random rng;
 
-        // global draw scale applied to rock textures (0.5 => 50% smaller)
-        public float TextureScale { get; set; } = 0.35f;
+        public float TextureScale { get; set; } = 0.5f;
 
         public List<Texture2D> MediumTextures { get; } = new List<Texture2D>();
         public List<Texture2D> VerticalTextures { get; } = new List<Texture2D>();
 
-        // generated rocks to draw
         public List<Rock> Rocks { get; } = new List<Rock>();
-
-        // how many rocks
         public int DrawCount { get; set; } = 4;
-
         public float MediumRatio { get; set; } = 0.6f;
 
         public RockManager(GraphicsDevice gd, int? seed = null)
@@ -61,9 +56,16 @@ namespace Final_Project
 
         public void GenerateRandom()
         {
-            Rocks.Clear();
             var vp = graphics.Viewport;
+            var generated = GenerateRocksIn(new Rectangle(0, 0, vp.Width, vp.Height));
+            Rocks.Clear();
+            Rocks.AddRange(generated);
+        }
 
+        // Generate rocks inside an arbitrary area (world coordinates). Returns a list and does not modify internal Rocks.
+        public List<Rock> GenerateRocksIn(Rectangle area)
+        {
+            var result = new List<Rock>();
             int attemptsLimit = 200;
             int padding = 4; // small spacing so textures don't touch
 
@@ -88,20 +90,19 @@ namespace Final_Project
                 int scaledW = Math.Max(1, (int)(tex.Width * TextureScale));
                 int scaledH = Math.Max(1, (int)(tex.Height * TextureScale));
 
-                
                 Rectangle placedBounds = Rectangle.Empty;
                 Vector2 pos = Vector2.Zero;
                 bool placed = false;
 
                 for (int attempt = 0; attempt < attemptsLimit; attempt++)
                 {
-                    int maxX = Math.Max(1, vp.Width - scaledW);
-                    int maxY = Math.Max(1, vp.Height - scaledH);
-                    pos = new Vector2(rng.Next(0, maxX), rng.Next(0, maxY));
+                    int maxX = Math.Max(1, area.Width - scaledW);
+                    int maxY = Math.Max(1, area.Height - scaledH);
+                    pos = new Vector2(area.X + rng.Next(0, maxX), area.Y + rng.Next(0, maxY));
                     placedBounds = new Rectangle((int)pos.X - padding, (int)pos.Y - padding, scaledW + padding * 2, scaledH + padding * 2);
 
                     bool overlap = false;
-                    foreach (var r in Rocks)
+                    foreach (var r in result)
                     {
                         if (placedBounds.Intersects(r.Bounds))
                         {
@@ -117,12 +118,13 @@ namespace Final_Project
                     }
                 }
 
-                
                 if (placed)
                 {
-                    Rocks.Add(new Rock(pos, tex, pickMedium, TextureScale));
+                    result.Add(new Rock(pos, tex, pickMedium, TextureScale));
                 }
             }
+
+            return result;
         }
 
         public void Draw(SpriteBatch sb)

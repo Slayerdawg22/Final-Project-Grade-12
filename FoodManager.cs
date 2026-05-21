@@ -16,19 +16,10 @@ namespace Final_Project
         private GraphicsDevice graphics;
         private Random rng = new Random();
         public List<Food> Foods { get; private set; } = new List<Food>();
-
-        // textures for levels 2..4 (level1 uses a drawn square)
         public Texture2D[] LevelTextures = new Texture2D[5];
-
-        // weighting for spawn chances (index 1..4)
         public float[] Weights = new float[] { 0, 0.8f, 0.25f, 0.1f, 0.05f };
-
-        // per-level scale multipliers for textured foods (index 1..4)
         public float[] LevelScales = new float[] { 0, 0.6f, 0.75f, 0.9f, 1f };
-
-        // per-level absolute sizes for untextured (level1) or min size
         public int BaseSize = 8;
-
         public int TotalCount = 50;
 
         public FoodManager(GraphicsDevice gd)
@@ -56,15 +47,22 @@ namespace Final_Project
         // now accepts an optional list of obstacle rocks to avoid when placing food
         public void GenerateInitial(IEnumerable<RockManager.Rock>? obstacles = null)
         {
-            Foods.Clear();
+            // generate within the full viewport and replace Foods
             var vp = graphics.Viewport;
+            Foods = GenerateIn(new Rectangle(0, 0, vp.Width, vp.Height), obstacles, TotalCount);
+        }
 
+        // generate food inside arbitrary area (world coords). Returns list and does not modify internal Foods.
+        public List<Food> GenerateIn(Rectangle area, IEnumerable<RockManager.Rock>? obstacles = null, int count = -1)
+        {
+            var result = new List<Food>();
             // normalize weights
             float sum = 0f;
             for (int i = 1; i <= 4; i++) sum += Weights[i];
 
             int attemptsLimit = 200;
-            for (int i = 0; i < TotalCount; i++)
+            int toGenerate = count <= 0 ? TotalCount : count;
+            for (int i = 0; i < toGenerate; i++)
             {
                 float pick = (float)(rng.NextDouble() * sum);
                 int level = 1;
@@ -87,32 +85,27 @@ namespace Final_Project
                     scale = LevelScales[level];
                     if (tex != null)
                     {
-                        // keep original size value (used for untextured fallback), drawing uses Scale
                         size = (int)(Math.Min(tex.Width, tex.Height) * scale);
                     }
                 }
                 else
                 {
-                    // level 1 small square slightly smaller than cell
                     size = Math.Max(4, (int)(BaseSize * 0.6f));
                 }
 
-                // compute final placed width/height using Food.GlobalScale so placement matches drawing
                 int placeW = tex != null ? Math.Max(1, (int)(tex.Width * scale * Food.GlobalScale)) : Math.Max(1, (int)(size * Food.GlobalScale));
                 int placeH = tex != null ? Math.Max(1, (int)(tex.Height * scale * Food.GlobalScale)) : Math.Max(1, (int)(size * Food.GlobalScale));
 
-                // pick a non-overlapping position
                 Rectangle placedBounds;
                 Vector2 pos = Vector2.Zero;
                 bool placed = false;
                 for (int attempt = 0; attempt < attemptsLimit; attempt++)
                 {
-                    pos = new Vector2(rng.Next(0, Math.Max(1, vp.Width - placeW)), rng.Next(0, Math.Max(1, vp.Height - placeH)));
+                    pos = new Vector2(area.X + rng.Next(0, Math.Max(1, area.Width - placeW)), area.Y + rng.Next(0, Math.Max(1, area.Height - placeH)));
                     placedBounds = new Rectangle((int)pos.X, (int)pos.Y, placeW, placeH);
                     bool overlap = false;
 
-                    // check against already placed food
-                    foreach (var f in Foods)
+                    foreach (var f in result)
                     {
                         if (placedBounds.Intersects(f.Bounds))
                         {
@@ -120,7 +113,6 @@ namespace Final_Project
                         }
                     }
 
-                    // check against obstacle rocks if provided
                     if (!overlap && obstacles != null)
                     {
                         foreach (var obs in obstacles)
@@ -138,13 +130,13 @@ namespace Final_Project
                     }
                 }
 
-                // Only add the food if we successfully found a non-overlapping place
                 if (placed)
                 {
-                    Foods.Add(new Food(pos, level, tex, size, scale));
+                    result.Add(new Food(pos, level, tex, size, scale));
                 }
-                // if not placed, skip this food (keeps counts possibly lower)
             }
+
+            return result;
         }
 
         public void Update(GameTime gameTime)

@@ -22,6 +22,8 @@ namespace Final_Project
 
 
         RockManager rockManager;
+        ChunkManager chunkManager;
+        ParticleManager particleManager;
         private KeyboardState prevKeyboardState;
 
         public Game1()
@@ -53,7 +55,6 @@ namespace Final_Project
 
             cell = new Cell(new Vector2(300, 300), cellSprites, nucleusSprite);
 
-            // pixel lvl 1 food
             pixel = new Texture2D(GraphicsDevice, 1, 1);
             pixel.SetData(new[] { Color.White });
 
@@ -67,8 +68,7 @@ namespace Final_Project
             foodKeys[4] = "Foods/YFood4";
 
             foodManager.LoadTextures((level) => foodKeys[level], Content);
-            foodManager.TotalCount = 25; // change overall amount here
-            foodManager.GenerateInitial();
+            foodManager.TotalCount = 25;
 
             rockManager = new RockManager(GraphicsDevice);
 
@@ -76,12 +76,14 @@ namespace Final_Project
             string[] verticalKeys = new string[] { "Rocks/VertRock(1)", "Rocks/VertRock(2)" };
             rockManager.LoadTextures(mediumKeys, verticalKeys, Content);
 
-            rockManager.DrawCount = 4;
-            rockManager.MediumRatio = 0.8f; // ~80% medium, 20% vertical
-            rockManager.GenerateRandom();
+            rockManager.DrawCount = 6;
+            rockManager.MediumRatio = 0.8f;
+            // use chunk manager to create content around the player
+            chunkManager = new ChunkManager(rockManager, foodManager, 1024, 1);
+            // ensure initial chunks around the player are populated
+            chunkManager.Update(cell.Position);
 
-            // now generate food, passing current rocks so food won't spawn on them
-            foodManager.GenerateInitial(rockManager.Rocks);
+            particleManager = new ParticleManager();
         }
 
 
@@ -106,12 +108,45 @@ namespace Final_Project
                 foodManager.GenerateInitial(rockManager.Rocks);
             }
 
-            // clampinf of cell
-            var vp = GraphicsDevice.Viewport;
-            cell.Position = new Vector2(
-                Math.Clamp(cell.Position.X, 0, vp.Width - cell.Bounds.Width),
-                Math.Clamp(cell.Position.Y, 0, vp.Height - cell.Bounds.Height)
-            );
+            // update chunks around the player
+            chunkManager.Update(cell.Position);
+
+            // resolve collisions between cell and rocks from loaded chunks
+            cell.ResolveCollisions(chunkManager.GetRocks());
+
+            // update particles
+            particleManager.Update(gameTime);
+
+            // check for eating food: if the cell overlaps a food by a small threshold, remove it and spawn particles
+            var foodsList = new List<Food>(chunkManager.GetFoods());
+            float eatThreshold = 4f; // pixels of penetration required to count as eaten
+
+            // compute cell circle
+            var cb = cell.Bounds;
+            Vector2 cCenter = cell.Position + new Vector2(cb.Width / 2f, cb.Height / 2f);
+            float cRadius = Math.Max(cb.Width, cb.Height) * 0.5f;
+
+            foreach (var f in foodsList)
+            {
+                var fb = f.Bounds;
+                // closest point on food rect to circle center
+                float closestX = MathHelper.Clamp(cCenter.X, fb.Left, fb.Right);
+                float closestY = MathHelper.Clamp(cCenter.Y, fb.Top, fb.Bottom);
+                Vector2 closest = new Vector2(closestX, closestY);
+                float dist = Vector2.Distance(cCenter, closest);
+                float penetration = cRadius - dist;
+                if (penetration >= eatThreshold)
+                {
+                    // spawn particles at food center
+                    Vector2 foodCenter = new Vector2(fb.X + fb.Width / 2f, fb.Y + fb.Height / 2f);
+                    int count = 6 + f.Level * 4;
+                    Color col = f.Level == 1 ? Color.LimeGreen : Color.Gold;
+                    particleManager.SpawnAt(foodCenter, count, col, 3f);
+
+                    // remove the food from its chunk
+                    chunkManager.RemoveFood(f);
+                }
+            }
 
             prevKeyboardState = ks;
 
@@ -125,13 +160,16 @@ namespace Final_Project
            
             GraphicsDevice.Clear(new Color(2, 13, 58));
 
-            _spriteBatch.Begin();
+            // simple camera: center screen on cell.Position
+            var vp = GraphicsDevice.Viewport;
+            var camera = Matrix.CreateTranslation(new Vector3(-cell.Position + new Vector2(vp.Width / 2f, vp.Height / 2f), 0f));
 
-
-            rockManager?.Draw(_spriteBatch);
-
+            _spriteBatch.Begin(transformMatrix: camera);
+            // draw rocks and foods from loaded chunks
+            foreach (var r in chunkManager.GetRocks()) r.Draw(_spriteBatch);
             cell.Draw(_spriteBatch);
-            foodManager.Draw(_spriteBatch, pixel);
+            foreach (var f in chunkManager.GetFoods()) f.Draw(_spriteBatch, pixel);
+            particleManager.Draw(_spriteBatch, pixel);
             _spriteBatch.End();
             // TODO: Add your drawing code here
 

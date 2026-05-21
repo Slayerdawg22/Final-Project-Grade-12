@@ -40,7 +40,6 @@ namespace Final_Project
         {
             KeyboardState k = Keyboard.GetState();
             Velocity = Vector2.Zero;
-
             if (k.IsKeyDown(Keys.Up)) Velocity.Y = -Speed;
             if (k.IsKeyDown(Keys.Down)) Velocity.Y = Speed;
             if (k.IsKeyDown(Keys.Left)) Velocity.X = -Speed;
@@ -64,8 +63,70 @@ namespace Final_Project
             UpdateAnimation(gameTime);
 
             Position += Velocity;
-
             nucleus.Update(gameTime);
+        }
+
+        // Resolve collisions between the circular cell and a set of rectangular obstacles (rocks).
+        public void ResolveCollisions(IEnumerable<RockManager.Rock> obstacles)
+        {
+            // compute circle center and radius based on current sprite and scale
+            var tex = sprites[spriteIndex];
+            float w = tex.Width * Scale;
+            float h = tex.Height * Scale;
+            Vector2 center = Position + new Vector2(w / 2f, h / 2f);
+            float radius = Math.Max(w, h) * 0.5f;
+
+            foreach (var obs in obstacles)
+            {
+                var rect = obs.Bounds;
+
+                // find closest point on AABB to circle center
+                float closestX = MathHelper.Clamp(center.X, rect.Left, rect.Right);
+                float closestY = MathHelper.Clamp(center.Y, rect.Top, rect.Bottom);
+                Vector2 closest = new Vector2(closestX, closestY);
+
+                Vector2 diff = center - closest;
+                float distSq = diff.LengthSquared();
+
+                if (distSq < radius * radius)
+                {
+                    if (distSq > 0.0001f)
+                    {
+                        float dist = (float)Math.Sqrt(distSq);
+                        float overlap = radius - dist;
+                        Vector2 push = diff / dist * overlap;
+                        // move position by push (since Position is top-left, shift by push)
+                        Position += push;
+                        // update center for subsequent checks
+                        center += push;
+                        // optionally damp velocity to avoid sticking
+                        if (Vector2.Dot(Velocity, push) > 0)
+                        {
+                            Velocity = Vector2.Zero;
+                        }
+                    }
+                    else
+                    {
+                        // center lies exactly on closest point (inside rect). Push out along smallest axis
+                        float leftOverlap = center.X - rect.Left;
+                        float rightOverlap = rect.Right - center.X;
+                        float topOverlap = center.Y - rect.Top;
+                        float bottomOverlap = rect.Bottom - center.Y;
+
+                        // find minimum penetration direction
+                        float min = Math.Min(Math.Min(leftOverlap, rightOverlap), Math.Min(topOverlap, bottomOverlap));
+                        Vector2 push = Vector2.Zero;
+                        if (min == leftOverlap) push = new Vector2(radius - leftOverlap, 0);
+                        else if (min == rightOverlap) push = new Vector2(-(radius - rightOverlap), 0);
+                        else if (min == topOverlap) push = new Vector2(0, radius - topOverlap);
+                        else push = new Vector2(0, -(radius - bottomOverlap));
+
+                        Position += push;
+                        center += push;
+                        Velocity = Vector2.Zero;
+                    }
+                }
+            }
         }
 
         public void Draw(SpriteBatch spriteBatch)
