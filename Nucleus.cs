@@ -13,16 +13,24 @@ using System.Threading.Tasks;
 
 namespace Final_Project
 {
+    // Common interface so Nucleus can be used by Cell and Virus (or any future entity)
+    public interface INucleated
+    {
+        Vector2 Position { get; }
+        Vector2 Velocity { get; }
+        float Scale { get; }
+        Rectangle Bounds { get; }
+    }
 
     public class Nucleus
     {
-        private Cell parent;
+        private INucleated parent;
         private Texture2D sprite;
         private float angle = 0f;
-        private float rotationSmoothing = 0.2f; 
-        private float returnSmoothing = 0.05f; 
+        private float rotationSmoothing = 0.2f;
+        private float returnSmoothing = 0.05f;
 
-        public Nucleus(Cell parentCell, Texture2D nucleusSprite)
+        public Nucleus(INucleated parentCell, Texture2D nucleusSprite)
         {
             parent = parentCell;
             sprite = nucleusSprite;
@@ -40,7 +48,6 @@ namespace Final_Project
             }
             else
             {
-                
                 float diff = MathHelper.WrapAngle(0f - angle);
                 angle += diff * returnSmoothing;
             }
@@ -49,26 +56,24 @@ namespace Final_Project
         public void Draw(SpriteBatch spriteBatch)
         {
             Vector2 center = parent.Position + new Vector2(
-            parent.Bounds.Width / 2,
-            parent.Bounds.Height / 2
+                parent.Bounds.Width / 2,
+                parent.Bounds.Height / 2
             );
 
             Vector2 origin = new Vector2(sprite.Width / 2, sprite.Height / 2);
 
             float nucleusScale = parent.Scale * 0.5f;
             spriteBatch.Draw(
-            sprite,
-            center,
-            null,
-            Color.White,
-            angle,
-            origin,
-            nucleusScale,
-            SpriteEffects.None,
-            0f
+                sprite,
+                center,
+                null,
+                Color.White,
+                angle,
+                origin,
+                nucleusScale,
+                SpriteEffects.None,
+                0f
             );
         }
     }
-
-
 }

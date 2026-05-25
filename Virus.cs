@@ -1,12 +1,20 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+
+
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
+
 
 namespace Final_Project
 {
-    public class Cell : INucleated
+    // Enemy virus controlled by WASD for testing. Uses the same nucleus behavior as the Cell.
+    public class Virus : INucleated
     {
         private Texture2D[] sprites;
         private int spriteIndex = 0;
@@ -24,22 +32,21 @@ namespace Final_Project
 
         private Nucleus nucleus;
 
-        public Cell(Vector2 startPos, Texture2D[] cellSprites, Texture2D nucleusSprite)
+        public Virus(Vector2 startPos, Texture2D[] virusSprites, Texture2D nucleusSprite)
         {
             Position = startPos;
-            sprites = cellSprites;
+            sprites = virusSprites;
             nucleus = new Nucleus(this, nucleusSprite);
         }
 
         public void HandleInput()
         {
             KeyboardState k = Keyboard.GetState();
-            // Use a local Vector2 to modify components, then assign back to the Velocity property.
             Vector2 v = Vector2.Zero;
-            if (k.IsKeyDown(Keys.Up)) v.Y = -Speed;
-            if (k.IsKeyDown(Keys.Down)) v.Y = Speed;
-            if (k.IsKeyDown(Keys.Left)) v.X = -Speed;
-            if (k.IsKeyDown(Keys.Right)) v.X = Speed;
+            if (k.IsKeyDown(Keys.W)) v.Y = -Speed;
+            if (k.IsKeyDown(Keys.S)) v.Y = Speed;
+            if (k.IsKeyDown(Keys.A)) v.X = -Speed;
+            if (k.IsKeyDown(Keys.D)) v.X = Speed;
             Velocity = v;
         }
 

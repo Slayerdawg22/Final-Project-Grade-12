@@ -1,11 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Media;
 using System;
 using System.Collections.Generic;
-using static System.Net.Mime.MediaTypeNames;
+
 namespace Final_Project
 {
     public class Game1 : Game
@@ -15,11 +13,16 @@ namespace Final_Project
 
         Texture2D[] cellSprites;
         Texture2D nucleusSprite;
+
         FoodManager foodManager;
         Texture2D pixel;
 
         Cell cell;
 
+        // virus fields
+        Texture2D[] virusSprites;
+        Texture2D virusNucleusSprite;
+        Virus virus;
 
         RockManager rockManager;
         ChunkManager chunkManager;
@@ -55,6 +58,18 @@ namespace Final_Project
 
             cell = new Cell(new Vector2(300, 300), cellSprites, nucleusSprite);
 
+            
+            virusSprites = new Texture2D[]
+            {
+                Content.Load<Texture2D>("Virus Textures/VirusBase(1)"),
+                Content.Load<Texture2D>("Virus Textures/VirusBase(2)"),
+                Content.Load<Texture2D>("Virus Textures/VirusBase(3)")
+            };
+            virusNucleusSprite = Content.Load<Texture2D>("Virus Textures/VirusNucleus");
+
+
+            virus = new Virus(new Vector2(500, 300), virusSprites, virusNucleusSprite);
+
             pixel = new Texture2D(GraphicsDevice, 1, 1);
             pixel.SetData(new[] { Color.White });
 
@@ -78,17 +93,13 @@ namespace Final_Project
 
             rockManager.DrawCount = 6;
             rockManager.MediumRatio = 0.8f;
-            
+
             chunkManager = new ChunkManager(rockManager, foodManager, 1024, 1);
-            
+
             chunkManager.Update(cell.Position);
 
             particleManager = new ParticleManager();
         }
-
-
-
-
 
         protected override void Update(GameTime gameTime)
         {
@@ -98,25 +109,29 @@ namespace Final_Project
 
             cell.Update(gameTime);
 
+            // update test virus (WASD)
+            virus.Update(gameTime);
+
             foodManager.Update(gameTime);
 
             // rock testing
             if (rockManager != null && ks.IsKeyDown(Keys.R) && !prevKeyboardState.IsKeyDown(Keys.R))
             {
                 rockManager.GenerateRandom();
-                
+
                 foodManager.GenerateInitial(rockManager.Rocks);
             }
 
-
             chunkManager.Update(cell.Position);
 
+            // resolve collisions for both cell and virus
             cell.ResolveCollisions(chunkManager.GetRocks());
+            virus.ResolveCollisions(chunkManager.GetRocks());
 
             particleManager.Update(gameTime);
 
             var foodsList = new List<Food>(chunkManager.GetFoods());
-            float eatThreshold = 4f; 
+            float eatThreshold = 4f;
 
             var cb = cell.Bounds;
             Vector2 cCenter = cell.Position + new Vector2(cb.Width / 2f, cb.Height / 2f);
@@ -137,7 +152,7 @@ namespace Final_Project
                     Color col = f.Level == 1 ? Color.LimeGreen : Color.Gold;
                     particleManager.SpawnAt(foodCenter, count, col, 3f);
 
-                    
+
                     chunkManager.RemoveFood(f);
                 }
             }
@@ -151,16 +166,20 @@ namespace Final_Project
 
         protected override void Draw(GameTime gameTime)
         {
-           
+
             GraphicsDevice.Clear(new Color(2, 13, 58));
 
-            
+
             var vp = GraphicsDevice.Viewport;
             var camera = Matrix.CreateTranslation(new Vector3(-cell.Position + new Vector2(vp.Width / 2f, vp.Height / 2f), 0f));
 
             _spriteBatch.Begin(transformMatrix: camera);
             foreach (var r in chunkManager.GetRocks()) r.Draw(_spriteBatch);
             cell.Draw(_spriteBatch);
+
+            // draw the virus (uses same camera centered on the cell; move cell to change camera)
+            virus.Draw(_spriteBatch);
+
             foreach (var f in chunkManager.GetFoods()) f.Draw(_spriteBatch, pixel);
             particleManager.Draw(_spriteBatch, pixel);
             _spriteBatch.End();
