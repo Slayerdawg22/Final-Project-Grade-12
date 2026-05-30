@@ -13,6 +13,10 @@ namespace Final_Project
 
         Texture2D[] cellSprites;
         Texture2D nucleusSprite;
+        // UI hearts
+        Texture2D heartSprite;
+        int maxLives = 3;
+        int currentLives = 3;
 
         FoodManager foodManager;
         Texture2D pixel;
@@ -72,6 +76,9 @@ namespace Final_Project
 
             pixel = new Texture2D(GraphicsDevice, 1, 1);
             pixel.SetData(new[] { Color.White });
+
+            
+            heartSprite = Content.Load<Texture2D>("Other Textures/life");
 
 
             foodManager = new FoodManager(GraphicsDevice);
@@ -185,6 +192,14 @@ namespace Final_Project
 
             foreach (var f in chunkManager.GetFoods()) f.Draw(_spriteBatch, pixel);
             particleManager.Draw(_spriteBatch, pixel);
+            _spriteBatch.End();
+
+            // Draw UI (no camera transform)
+            _spriteBatch.Begin();
+            for (int i = 0; i < maxLives; i++)
+            {
+                _spriteBatch.Draw(heartSprite, new Vector2(10 + i * 40, 10), null, Color.White, 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+            }
             _spriteBatch.End();
 
             base.Draw(gameTime);
