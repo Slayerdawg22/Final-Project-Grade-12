@@ -36,7 +36,7 @@ namespace Final_Project
         {
             Position = startPos;
             sprites = virusSprites;
-            nucleus = new Nucleus(this, nucleusSprite);
+            nucleus = new Nucleus(this, nucleusSprite, 0.3f);
         }
 
         public void HandleInput()

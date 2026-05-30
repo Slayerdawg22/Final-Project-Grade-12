@@ -28,7 +28,7 @@ namespace Final_Project
         {
             Position = startPos;
             sprites = cellSprites;
-            nucleus = new Nucleus(this, nucleusSprite);
+            nucleus = new Nucleus(this, nucleusSprite, 0.5f);
         }
 
         public void HandleInput()

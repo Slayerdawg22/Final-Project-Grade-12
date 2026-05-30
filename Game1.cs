@@ -99,6 +99,9 @@ namespace Final_Project
             chunkManager.Update(cell.Position);
 
             particleManager = new ParticleManager();
+
+            
+            
         }
 
         protected override void Update(GameTime gameTime)

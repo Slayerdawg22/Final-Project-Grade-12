@@ -29,11 +29,14 @@ namespace Final_Project
         private float angle = 0f;
         private float rotationSmoothing = 0.2f;
         private float returnSmoothing = 0.05f;
-
-        public Nucleus(INucleated parentCell, Texture2D nucleusSprite)
+        private float relativeScale = 0.5f;
+        private Vector2 offset = Vector2.Zero;
+        public Nucleus(INucleated parentCell, Texture2D nucleusSprite, float relativeScaleToParent = 0.5f, Vector2 offsetFromParent = default)
         {
             parent = parentCell;
             sprite = nucleusSprite;
+            relativeScale = relativeScaleToParent;
+            offset = offsetFromParent;
         }
 
         public void Update(GameTime gameTime)
@@ -58,11 +61,11 @@ namespace Final_Project
             Vector2 center = parent.Position + new Vector2(
                 parent.Bounds.Width / 2,
                 parent.Bounds.Height / 2
-            );
+            ) + offset;
 
             Vector2 origin = new Vector2(sprite.Width / 2, sprite.Height / 2);
 
-            float nucleusScale = parent.Scale * 0.5f;
+            float nucleusScale = parent.Scale * relativeScale;
             spriteBatch.Draw(
                 sprite,
                 center,
