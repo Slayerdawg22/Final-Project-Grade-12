@@ -27,6 +27,9 @@ namespace Final_Project
         Texture2D[] virusSprites;
         Texture2D virusNucleusSprite;
         Virus virus;
+        Random rng = new Random();
+        float virusRespawnTimer = 0f;
+        float virusRespawnDelay = 5f;
 
         RockManager rockManager;
         ChunkManager chunkManager;
@@ -113,14 +116,36 @@ namespace Final_Project
 
         protected override void Update(GameTime gameTime)
         {
+            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             var ks = Keyboard.GetState();
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || ks.IsKeyDown(Keys.Escape))
                 Exit();
 
             cell.Update(gameTime);
 
-            // update test virus (WASD)
-            virus.Update(gameTime);
+            // compute cell center for virus targeting and collision checks
+            var cb = cell.Bounds;
+            Vector2 cCenter = cell.Position + new Vector2(cb.Width / 2f, cb.Height / 2f);
+            float cRadius = Math.Max(cb.Width, cb.Height) * 0.5f;
+
+            // virus spawn logic: respawn after delay at a random position around the cell
+            if (!virus.Active)
+            {
+                virusRespawnTimer -= dt;
+                if (virusRespawnTimer <= 0f)
+                {
+                    float angle = (float)(rng.NextDouble() * Math.PI * 2.0);
+                    float dist = (float)(rng.NextDouble() * 400.0 + 300.0); // spawn 300-700 units away
+                    Vector2 spawnPos = cell.Position + new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * dist;
+                    // set speed slightly less than cell speed
+                    virus.Activate(spawnPos, cell.Speed * 0.9f);
+                }
+            }
+            else
+            {
+                // active: steer towards the cell center
+                virus.Update(gameTime, cCenter);
+            }
 
             foodManager.Update(gameTime);
 
@@ -138,14 +163,46 @@ namespace Final_Project
             cell.ResolveCollisions(chunkManager.GetRocks());
             virus.ResolveCollisions(chunkManager.GetRocks());
 
+            // if virus is active, check for collision using circle collision and for leaving the camera view
+            if (virus.Active)
+            {
+                var vb = virus.Bounds;
+                Vector2 vCenter = virus.Position + new Vector2(vb.Width / 2f, vb.Height / 2f);
+                float vRadius = Math.Max(vb.Width, vb.Height) * 0.5f;
+
+                // check circle collision between cell and virus
+                float distSq = Vector2.DistanceSquared(cCenter, vCenter);
+                float sumRadius = cRadius + vRadius;
+                if (distSq <= sumRadius * sumRadius)
+                {
+                    // spawn particles at the virus center only (longer lived particles for death)
+                    particleManager.SpawnAt(vCenter, 48, Color.Red, 4f, 1.0f, 1.8f);
+
+                    // decrement life and deactivate virus
+                    currentLives = Math.Max(0, currentLives - 1);
+                    virus.Deactivate();
+                    virusRespawnTimer = virusRespawnDelay;
+                }
+                else
+                {
+                    // if the virus goes off the camera view (you outran it), make it disappear
+                    var vp = GraphicsDevice.Viewport;
+                    Vector2 vScreen = vCenter - cell.Position + new Vector2(vp.Width / 2f, vp.Height / 2f);
+                    int margin = 8;
+                    if (vScreen.X < -margin || vScreen.X > vp.Width + margin || vScreen.Y < -margin || vScreen.Y > vp.Height + margin)
+                    {
+                        virus.Deactivate();
+                        virusRespawnTimer = virusRespawnDelay;
+                    }
+                }
+            }
+
             particleManager.Update(gameTime);
 
             var foodsList = new List<Food>(chunkManager.GetFoods());
             float eatThreshold = 4f;
 
-            var cb = cell.Bounds;
-            Vector2 cCenter = cell.Position + new Vector2(cb.Width / 2f, cb.Height / 2f);
-            float cRadius = Math.Max(cb.Width, cb.Height) * 0.5f;
+            // cb, cCenter, cRadius already computed above
 
             foreach (var f in foodsList)
             {

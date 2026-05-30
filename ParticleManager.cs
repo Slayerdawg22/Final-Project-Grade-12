@@ -43,18 +43,29 @@ namespace Final_Project
             }
         }
 
-        public void SpawnAt(Vector2 pos, int count, Color color, float size = 4f)
+        // lifeMin and lifeMax are optional; when provided they override the randomized short lifetime used by default
+        public void SpawnAt(Vector2 pos, int count, Color color, float size = 4f, float lifeMin = -1f, float lifeMax = -1f)
         {
             for (int i = 0; i < count; i++)
             {
                 var angle = (float)(rng.NextDouble() * Math.PI * 2);
                 var speed = (float)(rng.NextDouble() * 80 + 40);
+                float maxLife;
+                if (lifeMin >= 0f && lifeMax >= lifeMin)
+                {
+                    maxLife = (float)(rng.NextDouble() * (lifeMax - lifeMin) + lifeMin);
+                }
+                else
+                {
+                    maxLife = (float)(rng.NextDouble() * 0.6 + 0.4);
+                }
+
                 particles.Add(new Particle
                 {
                     Position = pos,
                     Velocity = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * speed,
                     Life = 0f,
-                    MaxLife = (float)(rng.NextDouble() * 0.6 + 0.4),
+                    MaxLife = maxLife,
                     Color = color,
                     Size = size * (float)(rng.NextDouble() * 0.8 + 0.6f)
                 });

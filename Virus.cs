@@ -24,13 +24,15 @@ namespace Final_Project
         // Implemented as properties to satisfy INucleated
         public Vector2 Position { get; set; }
         public Vector2 Velocity { get; set; }
-        public float Speed = 3f;
+        public float Speed = 2.4f;
         public float Scale { get; set; } = 0.25f;
 
         public Rectangle Bounds =>
             new Rectangle((int)Position.X, (int)Position.Y, (int)(sprites[spriteIndex].Width * Scale), (int)(sprites[spriteIndex].Height * Scale));
 
         private Nucleus nucleus;
+
+        public bool Active { get; private set; } = false;
 
         public Virus(Vector2 startPos, Texture2D[] virusSprites, Texture2D nucleusSprite)
         {
@@ -39,8 +41,22 @@ namespace Final_Project
             nucleus = new Nucleus(this, nucleusSprite, 0.3f);
         }
 
+        public void Activate(Vector2 startPos, float speed)
+        {
+            Position = startPos;
+            Speed = speed;
+            Active = true;
+        }
+
+        public void Deactivate()
+        {
+            Active = false;
+            Velocity = Vector2.Zero;
+        }
+
         public void HandleInput()
         {
+            // kept for testing/debugging but not used by AI by default
             KeyboardState k = Keyboard.GetState();
             Vector2 v = Vector2.Zero;
             if (k.IsKeyDown(Keys.W)) v.Y = -Speed;
@@ -61,10 +77,35 @@ namespace Final_Project
             }
         }
 
-        public void Update(GameTime gameTime)
+        // Update with optional target (cell center). If target provided and virus is active it will follow the target.
+        public void Update(GameTime gameTime, Vector2? target = null)
         {
-            HandleInput();
             UpdateAnimation(gameTime);
+
+            if (!Active)
+            {
+                nucleus.Update(gameTime);
+                return;
+            }
+
+            if (target.HasValue)
+            {
+                // move towards the target
+                var tex = sprites[spriteIndex];
+                float w = tex.Width * Scale;
+                float h = tex.Height * Scale;
+                Vector2 center = Position + new Vector2(w / 2f, h / 2f);
+                Vector2 dir = target.Value - center;
+                if (dir.LengthSquared() > 0.0001f)
+                {
+                    dir.Normalize();
+                    Velocity = dir * Speed;
+                }
+                else
+                {
+                    Velocity = Vector2.Zero;
+                }
+            }
 
             Position += Velocity;
             nucleus.Update(gameTime);
@@ -127,6 +168,7 @@ namespace Final_Project
 
         public void Draw(SpriteBatch spriteBatch)
         {
+            if (!Active) return;
             spriteBatch.Draw(sprites[spriteIndex], Position, null, Color.White, 0f, Vector2.Zero, Scale, SpriteEffects.None, 0f);
             nucleus.Draw(spriteBatch);
         }
