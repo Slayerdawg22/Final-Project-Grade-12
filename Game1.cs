@@ -198,7 +198,7 @@ namespace Final_Project
             _spriteBatch.Begin();
             for (int i = 0; i < maxLives; i++)
             {
-                _spriteBatch.Draw(heartSprite, new Vector2(10 + i * 40, 10), null, Color.White, 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+                _spriteBatch.Draw(heartSprite, new Vector2(10 + i * 40, 1), null, Color.White, 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
             }
             _spriteBatch.End();
 
