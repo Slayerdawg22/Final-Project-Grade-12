@@ -18,6 +18,19 @@ namespace Final_Project
         int maxLives = 3;
         int currentLives = 3;
 
+        // XP / evolution bar
+        Texture2D xpBarEmptySprite; // optional decorative empty bar (set asset name below)
+        string xpBarEmptyAssetName = "Other Textures/XpBar"; // put your Content pipeline path here, e.g. "UI/xp_empty" (leave blank to draw a procedural bar)
+        int xpCurrent = 0;
+        int xpToNext = 500; // total XP required to fill the evolution bar
+        int xpBarWidth = 250; // default width in pixels
+        int xpBarHeight = 10;  // default height in pixels
+        int xpBarInset = 4; // inset for the green fill inside the decorative sprite
+        // precise inner offsets inside the decorative sprite where the green fill should draw
+        // adjust these to match the transparent inner area of your sprite
+        int xpBarInnerOffsetX = 6;
+        int xpBarInnerOffsetY = 6;
+
         FoodManager foodManager;
         Texture2D pixel;
 
@@ -82,7 +95,18 @@ namespace Final_Project
 
             
             heartSprite = Content.Load<Texture2D>("Other Textures/life");
-
+            xpBarEmptySprite = Content.Load<Texture2D>("Other Textures/XpBar");
+            // scale the sprite down if it's too large so it doesn't cover the screen
+            if (xpBarEmptySprite != null)
+            {
+                int maxDesiredWidth = 300; // maximum width to display on screen
+                int desiredWidth = Math.Min(xpBarEmptySprite.Width, maxDesiredWidth);
+                float scale = (float)desiredWidth / xpBarEmptySprite.Width;
+                xpBarWidth = desiredWidth;
+                xpBarHeight = Math.Max(1, (int)(xpBarEmptySprite.Height * scale));
+                // adjust inset proportionally so the green fill sits nicely inside
+                xpBarInset = Math.Max(2, xpBarHeight / 8);
+            }
 
             foodManager = new FoodManager(GraphicsDevice);
 
@@ -219,6 +243,9 @@ namespace Final_Project
                     Color col = f.Level == 1 ? Color.LimeGreen : Color.Gold;
                     particleManager.SpawnAt(foodCenter, count, col, 3f);
 
+                    // grant XP based on food level (simple ratio: 50 XP per food level)
+                    int xpGain = 25 * Math.Max(1, f.Level);
+                    xpCurrent = Math.Min(xpToNext, xpCurrent + xpGain);
 
                     chunkManager.RemoveFood(f);
                 }
@@ -250,13 +277,38 @@ namespace Final_Project
             foreach (var f in chunkManager.GetFoods()) f.Draw(_spriteBatch, pixel);
             particleManager.Draw(_spriteBatch, pixel);
             _spriteBatch.End();
-
             // Draw UI (no camera transform)
             _spriteBatch.Begin();
-            for (int i = 0; i < maxLives; i++)
+            // Draw one heart per remaining life
+            for (int i = 0; i < currentLives; i++)
             {
                 _spriteBatch.Draw(heartSprite, new Vector2(10 + i * 40, 1), null, Color.White, 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
             }
+
+            // Draw XP / evolution bar at bottom center
+            int barX = (vp.Width - xpBarWidth) / 2;
+            int barY = vp.Height - xpBarHeight - 10; // 10px margin from bottom
+
+            // If the decorative sprite is provided, draw the green fill strictly inside a configured inner rectangle
+            if (xpBarEmptySprite != null)
+            {
+                // compute inner rectangle within the scaled sprite where the fill should appear
+                int innerX = barX + xpBarInnerOffsetX;
+                int innerY = barY + xpBarInnerOffsetY;
+                int innerW = Math.Max(0, xpBarWidth - xpBarInnerOffsetX * 2);
+                int innerH = Math.Max(0, xpBarHeight - xpBarInnerOffsetY * 2);
+
+                float pct = xpToNext > 0 ? (float)xpCurrent / xpToNext : 0f;
+                int fillW = (int)(innerW * MathHelper.Clamp(pct, 0f, 1f));
+                if (fillW > 0 && innerH > 0)
+                {
+                    _spriteBatch.Draw(pixel, new Rectangle(innerX, innerY, fillW, innerH), Color.LimeGreen);
+                }
+
+                // draw the decorative empty bar on top so its border is visible
+                _spriteBatch.Draw(xpBarEmptySprite, new Rectangle(barX, barY, xpBarWidth, xpBarHeight), Color.White);
+            }
+
             _spriteBatch.End();
 
             base.Draw(gameTime);
