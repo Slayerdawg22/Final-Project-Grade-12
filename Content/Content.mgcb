@@ -169,6 +169,42 @@
 /processorParam:TextureFormat=Color
 /build:Foods/YFood4.png
 
+#begin Level 1 Cell Textures/Lvl1cell(1).png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Level 1 Cell Textures/Lvl1cell(1).png
+
+#begin Level 1 Cell Textures/Lvl1Cell(2).png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Level 1 Cell Textures/Lvl1Cell(2).png
+
+#begin Level 1 Cell Textures/Lvl1Cell(3).png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Level 1 Cell Textures/Lvl1Cell(3).png
+
 #begin Other Textures/heart.png
 /importer:TextureImporter
 /processor:TextureProcessor
