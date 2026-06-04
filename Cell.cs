@@ -18,6 +18,10 @@ namespace Final_Project
         public Vector2 Velocity { get; set; }
         public float Speed = 3f;
         public float Scale { get; set; } = 0.25f;
+        // Boost state
+        private float boostTimer = 0f;
+        private float boostDuration = 0.25f;
+        private Vector2 boostVelocity = Vector2.Zero;
 
         public Rectangle Bounds =>
             new Rectangle((int)Position.X, (int)Position.Y, (int)(sprites[spriteIndex].Width * Scale), (int)(sprites[spriteIndex].Height * Scale));
@@ -68,11 +72,35 @@ namespace Final_Project
 
         public void Update(GameTime gameTime)
         {
-            HandleInput();
+            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            if (boostTimer > 0f)
+            {
+                boostTimer -= dt;
+                if (boostTimer <= 0f)
+                {
+                    boostTimer = 0f;
+                    boostVelocity = Vector2.Zero;
+                }
+                Velocity = boostVelocity;
+            }
+            else
+            {
+                HandleInput();
+            }
             UpdateAnimation(gameTime);
 
-            Position += Velocity;
+            Position += Velocity * dt * 60f; // keep previous movement feel (units/frame)
             nucleus.Update(gameTime);
+        }
+
+        // Trigger a directional boost for a short duration
+        public void Boost(Vector2 direction, float magnitude, float duration = 0.25f)
+        {
+            if (direction.LengthSquared() <= 0.0001f) return;
+            boostDuration = duration;
+            boostTimer = duration;
+            boostVelocity = Vector2.Normalize(direction) * magnitude;
         }
 
         public void ResolveCollisions(IEnumerable<RockManager.Rock> obstacles)

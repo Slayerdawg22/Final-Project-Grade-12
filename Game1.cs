@@ -154,6 +154,30 @@ namespace Final_Project
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || ks.IsKeyDown(Keys.Escape))
                 Exit();
 
+            // Boost input: space consumes XP and triggers a short directional boost
+            if (ks.IsKeyDown(Keys.Space) && !prevKeyboardState.IsKeyDown(Keys.Space))
+            {
+                int boostCost = 350;
+                if (xpCurrent >= boostCost)
+                {
+                    // determine boost direction from arrow keys; fallback to current velocity or up
+                    Vector2 dir = Vector2.Zero;
+                    if (ks.IsKeyDown(Keys.Up)) dir.Y = -1;
+                    if (ks.IsKeyDown(Keys.Down)) dir.Y = 1;
+                    if (ks.IsKeyDown(Keys.Left)) dir.X = -1;
+                    if (ks.IsKeyDown(Keys.Right)) dir.X = 1;
+                    if (dir.LengthSquared() <= 0.0001f)
+                    {
+                        dir = cell.Velocity;
+                        if (dir.LengthSquared() <= 0.0001f) dir = new Vector2(0, -1);
+                    }
+
+                    xpCurrent = Math.Max(0, xpCurrent - boostCost);
+                    float magnitude = cell.Speed * 6f;
+                    cell.Boost(dir, magnitude, 0.25f);
+                }
+            }
+
             cell.Update(gameTime);
 
             // compute cell center for virus targeting and collision checks
