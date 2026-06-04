@@ -320,9 +320,9 @@ namespace Final_Project
 
             var vp = GraphicsDevice.Viewport;
 
-            // Camera scaling: zoom out by 25% each evolution step (multiplicative)
+            
             float cameraScale = (float)Math.Pow(0.75, currentLevel - 1);
-            // Build transform: translate world so cell is at origin, scale, then translate to screen center
+            
             var translateToOrigin = Matrix.CreateTranslation(new Vector3(-cell.Position, 0f));
             var scaleMat = Matrix.CreateScale(cameraScale, cameraScale, 1f);
             var translateToScreen = Matrix.CreateTranslation(new Vector3(vp.Width / 2f, vp.Height / 2f, 0f));
@@ -332,7 +332,7 @@ namespace Final_Project
             foreach (var r in chunkManager.GetRocks()) r.Draw(_spriteBatch);
             cell.Draw(_spriteBatch);
 
-            // draw the virus (uses same camera centered on the cell; move cell to change camera)
+            
             virus.Draw(_spriteBatch);
 
             foreach (var f in chunkManager.GetFoods()) f.Draw(_spriteBatch, pixel);
@@ -340,20 +340,20 @@ namespace Final_Project
             _spriteBatch.End();
             // Draw UI (no camera transform)
             _spriteBatch.Begin();
-            // Draw one heart per remaining life
+            
             for (int i = 0; i < currentLives; i++)
             {
                 _spriteBatch.Draw(heartSprite, new Vector2(10 + i * 40, 1), null, Color.White, 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
             }
 
-            // Draw XP / evolution bar at bottom center
+            
             int barX = (vp.Width - xpBarWidth) / 2;
-            int barY = vp.Height - xpBarHeight - 10; // 10px margin from bottom
+            int barY = vp.Height - xpBarHeight - 10; 
 
-            // If the decorative sprite is provided, draw the green fill strictly inside a configured inner rectangle
+            
             if (xpBarEmptySprite != null)
             {
-                // compute inner rectangle within the scaled sprite where the fill should appear
+               
                 int innerX = barX + xpBarInnerOffsetX;
                 int innerY = barY + xpBarInnerOffsetY;
                 int innerW = Math.Max(0, xpBarWidth - xpBarInnerOffsetX * 2);
@@ -366,7 +366,7 @@ namespace Final_Project
                     _spriteBatch.Draw(pixel, new Rectangle(innerX, innerY, fillW, innerH), Color.LimeGreen);
                 }
 
-                // draw the decorative empty bar on top so its border is visible
+                
                 _spriteBatch.Draw(xpBarEmptySprite, new Rectangle(barX, barY, xpBarWidth, xpBarHeight), Color.White);
             }
 
