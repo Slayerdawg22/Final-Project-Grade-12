@@ -268,10 +268,13 @@ namespace Final_Project
                             // swap to new sprite set and slightly increase scale per level
                             float newScale = baseCellScale + (currentLevel - 1) * 0.06f;
                             cell.SetSprites(levelSpriteSets[currentLevel - 1], newScale);
+                            // make next evolution harder
+                            float multiplier = 2f;
+                            xpToNext = Math.Max(xpToNext + 1, (int)(xpToNext * multiplier));
                         }
                         else
                         {
-                            // already at max level, keep XP at 0 (bar reset)
+                            // at max level, keep XP reset
                         }
                     }
 
