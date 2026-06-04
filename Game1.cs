@@ -13,16 +13,19 @@ namespace Final_Project
 
         Texture2D[] cellSprites;
         Texture2D nucleusSprite;
-        // UI hearts
+        int currentLevel = 1;
+        int maxLevel = 4;
+        List<Texture2D[]> levelSpriteSets = new List<Texture2D[]>();
+        float baseCellScale = 0.25f;
         Texture2D heartSprite;
         int maxLives = 3;
         int currentLives = 3;
 
         // XP / evolution bar
         Texture2D xpBarEmptySprite; // optional decorative empty bar (set asset name below)
-        string xpBarEmptyAssetName = "Other Textures/XpBar"; // put your Content pipeline path here, e.g. "UI/xp_empty" (leave blank to draw a procedural bar)
+
         int xpCurrent = 0;
-        int xpToNext = 500; // total XP required to fill the evolution bar
+        int xpToNext = 800; // total XP required to fill the evolution bar
         int xpBarWidth = 250; // default width in pixels
         int xpBarHeight = 10;  // default height in pixels
         int xpBarInset = 4; // inset for the green fill inside the decorative sprite
@@ -67,12 +70,7 @@ namespace Final_Project
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            cellSprites = new Texture2D[]
-            {
-                        Content.Load<Texture2D>("Cell Textures/Base(1)"),
-                        Content.Load<Texture2D>("Cell Textures/Base(2)"),
-                        Content.Load<Texture2D>("Cell Textures/Base(3)")
-            };
+            
 
             nucleusSprite = Content.Load<Texture2D>("Cell Textures/nucleus");
 
@@ -96,15 +94,13 @@ namespace Final_Project
             
             heartSprite = Content.Load<Texture2D>("Other Textures/life");
             xpBarEmptySprite = Content.Load<Texture2D>("Other Textures/XpBar");
-            // scale the sprite down if it's too large so it doesn't cover the screen
-            if (xpBarEmptySprite != null)
+            // scale xp bar sprite to a reasonable width
             {
-                int maxDesiredWidth = 300; // maximum width to display on screen
+                int maxDesiredWidth = 300;
                 int desiredWidth = Math.Min(xpBarEmptySprite.Width, maxDesiredWidth);
                 float scale = (float)desiredWidth / xpBarEmptySprite.Width;
                 xpBarWidth = desiredWidth;
                 xpBarHeight = Math.Max(1, (int)(xpBarEmptySprite.Height * scale));
-                // adjust inset proportionally so the green fill sits nicely inside
                 xpBarInset = Math.Max(2, xpBarHeight / 8);
             }
 
@@ -136,6 +132,19 @@ namespace Final_Project
 
             
             
+            // Load level sprites using pattern: "Level {lvl} Cell Textures/Lvl{lvl}Cell({i})"
+            for (int lvl = 1; lvl <= maxLevel; lvl++)
+            {
+                Texture2D[] set = new Texture2D[3];
+                for (int i = 1; i <= 3; i++)
+                {
+                    // Update this pattern if your Content paths differ. Use the exact pipeline asset name.
+                    string assetKey = $"Level {lvl} Cell Textures/Lvl{lvl}Cell({i})";
+                    set[i - 1] = Content.Load<Texture2D>(assetKey);
+                }
+                levelSpriteSets.Add(set);
+            }
+            cell.SetSprites(levelSpriteSets[currentLevel - 1], baseCellScale);
         }
 
         protected override void Update(GameTime gameTime)
@@ -211,7 +220,9 @@ namespace Final_Project
                 {
                     // if the virus goes off the camera view (you outran it), make it disappear
                     var vp = GraphicsDevice.Viewport;
-                    Vector2 vScreen = vCenter - cell.Position + new Vector2(vp.Width / 2f, vp.Height / 2f);
+                    // Account for camera scale (zoom) when mapping world -> screen.
+                    float cameraScale = (float)Math.Pow(0.75, currentLevel - 1);
+                    Vector2 vScreen = (vCenter - cell.Position) * cameraScale + new Vector2(vp.Width / 2f, vp.Height / 2f);
                     int margin = 8;
                     if (vScreen.X < -margin || vScreen.X > vp.Width + margin || vScreen.Y < -margin || vScreen.Y > vp.Height + margin)
                     {
@@ -247,13 +258,29 @@ namespace Final_Project
                     int xpGain = 25 * Math.Max(1, f.Level);
                     xpCurrent = Math.Min(xpToNext, xpCurrent + xpGain);
 
+                    // If XP bar is full, attempt to evolve
+                    if (xpCurrent >= xpToNext)
+                    {
+                        xpCurrent = 0; // reset XP
+                        if (currentLevel < maxLevel)
+                        {
+                            currentLevel++;
+                            // swap to new sprite set and slightly increase scale per level
+                            float newScale = baseCellScale + (currentLevel - 1) * 0.06f;
+                            cell.SetSprites(levelSpriteSets[currentLevel - 1], newScale);
+                        }
+                        else
+                        {
+                            // already at max level, keep XP at 0 (bar reset)
+                        }
+                    }
+
                     chunkManager.RemoveFood(f);
                 }
             }
 
             prevKeyboardState = ks;
 
-            // TODO: Add your update logic here
 
             base.Update(gameTime);
         }
@@ -265,7 +292,14 @@ namespace Final_Project
 
 
             var vp = GraphicsDevice.Viewport;
-            var camera = Matrix.CreateTranslation(new Vector3(-cell.Position + new Vector2(vp.Width / 2f, vp.Height / 2f), 0f));
+
+            // Camera scaling: zoom out by 25% each evolution step (multiplicative)
+            float cameraScale = (float)Math.Pow(0.75, currentLevel - 1);
+            // Build transform: translate world so cell is at origin, scale, then translate to screen center
+            var translateToOrigin = Matrix.CreateTranslation(new Vector3(-cell.Position, 0f));
+            var scaleMat = Matrix.CreateScale(cameraScale, cameraScale, 1f);
+            var translateToScreen = Matrix.CreateTranslation(new Vector3(vp.Width / 2f, vp.Height / 2f, 0f));
+            var camera = translateToOrigin * scaleMat * translateToScreen;
 
             _spriteBatch.Begin(transformMatrix: camera);
             foreach (var r in chunkManager.GetRocks()) r.Draw(_spriteBatch);

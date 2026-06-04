@@ -31,6 +31,18 @@ namespace Final_Project
             nucleus = new Nucleus(this, nucleusSprite, 0.5f);
         }
 
+        // Allow swapping sprite sets (used for evolution levels)
+        public void SetSprites(Texture2D[] newSprites, float newScale)
+        {
+            if (newSprites == null || newSprites.Length == 0)
+                return;
+
+            sprites = newSprites;
+            spriteIndex = 0;
+            animationTimer = 0f;
+            Scale = newScale;
+        }
+
         public void HandleInput()
         {
             KeyboardState k = Keyboard.GetState();
