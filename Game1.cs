@@ -24,6 +24,15 @@ namespace Final_Project
         // XP / evolution bar
         Texture2D xpBarEmptySprite; // optional decorative empty bar (set asset name below)
 
+        // evolution UI
+        bool xpFull = false;
+        bool evolutionMenuOpen = false;
+        Texture2D evoButtonSprite;
+        Texture2D evoMenuBgSprite;
+        Texture2D evoCloseSprite;
+        Texture2D evoConfirmSprite;
+        MouseState prevMouseState;
+
         int xpCurrent = 0;
         int xpToNext = 800; // total XP required to fill the evolution bar
         int xpBarWidth = 250; // default width in pixels
@@ -145,6 +154,12 @@ namespace Final_Project
                 levelSpriteSets.Add(set);
             }
             cell.SetSprites(levelSpriteSets[currentLevel - 1], baseCellScale);
+
+            // Evo UI assets - update these asset keys to your actual names
+            evoButtonSprite = Content.Load<Texture2D>("Other Textures/EvolveBtn");
+            evoMenuBgSprite = Content.Load<Texture2D>("BackGrounds/Evolution Background");
+            evoCloseSprite = Content.Load<Texture2D>("Other Textures/ExitBtn");
+            evoConfirmSprite = Content.Load<Texture2D>("Other Textures/ConfirmBtn");
         }
 
         protected override void Update(GameTime gameTime)
@@ -282,24 +297,11 @@ namespace Final_Project
                     int xpGain = 25 * Math.Max(1, f.Level);
                     xpCurrent = Math.Min(xpToNext, xpCurrent + xpGain);
 
-                    // If XP bar is full, attempt to evolve
+                    // If XP bar is full, set flag to allow manual evolution via UI
                     if (xpCurrent >= xpToNext)
                     {
-                        xpCurrent = 0; // reset XP
-                        if (currentLevel < maxLevel)
-                        {
-                            currentLevel++;
-                            // swap to new sprite set and slightly increase scale per level
-                            float newScale = baseCellScale + (currentLevel - 1) * 0.06f;
-                            cell.SetSprites(levelSpriteSets[currentLevel - 1], newScale);
-                            // make next evolution harder
-                            float multiplier = 2f;
-                            xpToNext = Math.Max(xpToNext + 1, (int)(xpToNext * multiplier));
-                        }
-                        else
-                        {
-                            // at max level, keep XP reset
-                        }
+                        xpCurrent = xpToNext;
+                        xpFull = true;
                     }
 
                     chunkManager.RemoveFood(f);
@@ -307,6 +309,62 @@ namespace Final_Project
             }
 
             prevKeyboardState = ks;
+            // mouse handling for evo UI
+            var ms = Mouse.GetState();
+            // if XP bar full show evo button; clicking opens menu
+            if (!evolutionMenuOpen && xpFull)
+            {
+                int barX = (GraphicsDevice.Viewport.Width - xpBarWidth) / 2;
+                int barY = GraphicsDevice.Viewport.Height - xpBarHeight - 10;
+                Rectangle evoBtnRect = new Rectangle(barX + xpBarWidth + 8, barY, evoButtonSprite.Width, evoButtonSprite.Height);
+                if (ms.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
+                {
+                    if (evoBtnRect.Contains(ms.Position))
+                    {
+                        evolutionMenuOpen = true;
+                    }
+                }
+            }
+
+            if (evolutionMenuOpen)
+            {
+                // menu centered
+                var vp = GraphicsDevice.Viewport;
+                int menuW = evoMenuBgSprite.Width;
+                int menuH = evoMenuBgSprite.Height;
+                int menuX = (vp.Width - menuW) / 2;
+                int menuY = (vp.Height - menuH) / 2;
+
+                Rectangle closeRect = new Rectangle(menuX + menuW - evoCloseSprite.Width - 8, menuY + 8, evoCloseSprite.Width, evoCloseSprite.Height);
+                Rectangle confirmRect = new Rectangle(menuX + (menuW - evoConfirmSprite.Width) / 2, menuY + menuH - evoConfirmSprite.Height - 16, evoConfirmSprite.Width, evoConfirmSprite.Height);
+
+                if (ms.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
+                {
+                    if (closeRect.Contains(ms.Position))
+                    {
+                        evolutionMenuOpen = false;
+                    }
+                    else if (confirmRect.Contains(ms.Position))
+                    {
+                        // perform evolution if possible
+                        if (currentLevel < maxLevel)
+                        {
+                            currentLevel++;
+                            float newScale = baseCellScale + (currentLevel - 1) * 0.06f;
+                            cell.SetSprites(levelSpriteSets[currentLevel - 1], newScale);
+                            // make next evolution harder
+                            float multiplier = 2f;
+                            xpToNext = Math.Max(xpToNext + 1, (int)(xpToNext * multiplier));
+                        }
+                        // reset xp and flags
+                        xpCurrent = 0;
+                        xpFull = false;
+                        evolutionMenuOpen = false;
+                    }
+                }
+            }
+
+            prevMouseState = Mouse.GetState();
 
 
             base.Update(gameTime);
@@ -368,6 +426,27 @@ namespace Final_Project
 
                 
                 _spriteBatch.Draw(xpBarEmptySprite, new Rectangle(barX, barY, xpBarWidth, xpBarHeight), Color.White);
+            }
+
+            // Draw evo button when XP is full
+            if (xpFull)
+            {
+                Rectangle evoBtnRect = new Rectangle(barX + xpBarWidth + 8, barY, evoButtonSprite.Width, evoButtonSprite.Height);
+                _spriteBatch.Draw(evoButtonSprite, evoBtnRect, Color.White);
+            }
+
+            // Draw evolution menu if open
+            if (evolutionMenuOpen)
+            {
+                int menuW = evoMenuBgSprite.Width;
+                int menuH = evoMenuBgSprite.Height;
+                int menuX = (vp.Width - menuW) / 2;
+                int menuY = (vp.Height - menuH) / 2;
+                _spriteBatch.Draw(evoMenuBgSprite, new Rectangle(menuX, menuY, menuW, menuH), Color.White);
+                // close button
+                _spriteBatch.Draw(evoCloseSprite, new Vector2(menuX + menuW - evoCloseSprite.Width - 8, menuY + 8), Color.White);
+                // confirm (evolve)
+                _spriteBatch.Draw(evoConfirmSprite, new Vector2(menuX + (menuW - evoConfirmSprite.Width) / 2, menuY + menuH - evoConfirmSprite.Height - 16), Color.White);
             }
 
             _spriteBatch.End();
