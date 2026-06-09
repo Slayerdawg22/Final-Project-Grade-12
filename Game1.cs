@@ -151,8 +151,7 @@ namespace Final_Project
                     string assetKey = $"Level {lvl} Cell Textures/Lvl{lvl}Cell({i})";
                     set[i - 1] = Content.Load<Texture2D>(assetKey);
                 }
-                levelSpriteSets.Add(set);
-            }
+                levelSpriteSets.Add(set);            }
             cell.SetSprites(levelSpriteSets[currentLevel - 1], baseCellScale);
 
             // Evo UI assets - update these asset keys to your actual names

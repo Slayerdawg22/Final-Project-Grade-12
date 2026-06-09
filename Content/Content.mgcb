@@ -13,42 +13,6 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin ../../../../Downloads/Lvl1Cell(1).png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:../../../../Downloads/Lvl1Cell(1).png;Level 1 Cell Textures/Lvl1Cell(1).png
-
-#begin ../../../../Downloads/Lvl1Cell(2).png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:../../../../Downloads/Lvl1Cell(2).png;Level 1 Cell Textures/Lvl1Cell(2).png
-
-#begin ../../../../Downloads/Lvl1Cell(3).png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:../../../../Downloads/Lvl1Cell(3).png;Level 1 Cell Textures/Lvl1Cell(3).png
-
 #begin BackGrounds/Evolution Background.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -144,6 +108,42 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Foods/YFood4.png
+
+#begin Level 1 Cell Textures/Lvl1Cell(1).png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Level 1 Cell Textures/Lvl1Cell(1).png
+
+#begin Level 1 Cell Textures/Lvl1Cell(2).png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Level 1 Cell Textures/Lvl1Cell(2).png
+
+#begin Level 1 Cell Textures/Lvl1Cell(3).png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Level 1 Cell Textures/Lvl1Cell(3).png
 
 #begin Level 2 Cell Textures/Lvl2Cell(1).png
 /importer:TextureImporter
