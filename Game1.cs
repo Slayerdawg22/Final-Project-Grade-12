@@ -315,7 +315,7 @@ namespace Final_Project
             {
                 int barX = (GraphicsDevice.Viewport.Width - xpBarWidth) / 2;
                 int barY = GraphicsDevice.Viewport.Height - xpBarHeight - 10;
-                Rectangle evoBtnRect = new Rectangle(barX + xpBarWidth + 8, barY, evoButtonSprite.Width, evoButtonSprite.Height);
+                Rectangle evoBtnRect = new Rectangle(570, 420, 40, 40);
                 if (ms.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
                 {
                     if (evoBtnRect.Contains(ms.Position))
@@ -373,7 +373,7 @@ namespace Final_Project
         {
 
             GraphicsDevice.Clear(new Color(2, 13, 58));
-
+            MouseState ms = Mouse.GetState();
 
             var vp = GraphicsDevice.Viewport;
 
@@ -430,9 +430,11 @@ namespace Final_Project
             // Draw evo button when XP is full
             if (xpFull)
             {
-                Rectangle evoBtnRect = new Rectangle(barX + xpBarWidth + 8, barY, evoButtonSprite.Width, evoButtonSprite.Height);
+                //Rectangle evoBtnRect = new Rectangle(barX + xpBarWidth + 8, barY, evoButtonSprite.Width, evoButtonSprite.Height);
+                Rectangle evoBtnRect = new Rectangle(570,420,40,40);
                 _spriteBatch.Draw(evoButtonSprite, evoBtnRect, Color.White);
             }
+            
 
             // Draw evolution menu if open
             if (evolutionMenuOpen)
