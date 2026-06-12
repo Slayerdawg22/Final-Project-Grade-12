@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 
 namespace Final_Project
 {
-    // Common interface so Nucleus can be used by Cell and Virus (or any future entity)
     public interface INucleated
     {
         Vector2 Position { get; }

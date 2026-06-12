@@ -13,12 +13,10 @@ namespace Final_Project
         private float animationTimer = 0f;
         private float animationSpeed = 0.15f;
 
-        // Implemented as properties to satisfy INucleated
         public Vector2 Position { get; set; }
         public Vector2 Velocity { get; set; }
         public float Speed = 3f;
         public float Scale { get; set; } = 0.25f;
-        // Boost state
         private float boostTimer = 0f;
         private float boostDuration = 0.25f;
         private Vector2 boostVelocity = Vector2.Zero;
@@ -35,7 +33,6 @@ namespace Final_Project
             nucleus = new Nucleus(this, nucleusSprite, 0.5f);
         }
 
-        // Allow swapping sprite sets (used for evolution levels)
         public void SetSprites(Texture2D[] newSprites, float newScale)
         {
             if (newSprites == null || newSprites.Length == 0)
@@ -50,7 +47,6 @@ namespace Final_Project
         public void HandleInput()
         {
             KeyboardState k = Keyboard.GetState();
-            // Use a local Vector2 to modify components, then assign back to the Velocity property.
             Vector2 v = Vector2.Zero;
             if (k.IsKeyDown(Keys.Up)) v.Y = -Speed;
             if (k.IsKeyDown(Keys.Down)) v.Y = Speed;
@@ -90,11 +86,10 @@ namespace Final_Project
             }
             UpdateAnimation(gameTime);
 
-            Position += Velocity * dt * 60f; // keep previous movement feel (units/frame)
+            Position += Velocity * dt * 60f;
             nucleus.Update(gameTime);
         }
 
-        // Trigger a directional boost for a short duration
         public void Boost(Vector2 direction, float magnitude, float duration = 0.25f)
         {
             if (direction.LengthSquared() <= 0.0001f) return;
