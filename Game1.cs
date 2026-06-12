@@ -30,8 +30,21 @@ namespace Final_Project
         Texture2D evoButtonSprite;
         Texture2D evoMenuBgSprite;
         Texture2D evoCloseSprite;
-        Texture2D evoConfirmSprite;
+        // Flagella (three-frame animation)
+        Texture2D[] flagellaSprites;
+        bool hasFlagella = false;
+        float flagellaAnimTimer = 0f;
+        float flagellaAnimSpeed = 0.12f;
+        int flagellaIndex = 0;
+        // flagella rotation to follow cell direction (smoothed like nucleus)
+        float flagellaAngle = 0f;
+        float flagellaRotationSmoothing = 0.2f;
+        float flagellaReturnSmoothing = 0.05f;
         MouseState prevMouseState;
+        Rectangle evoBtnRect;
+        int prevBackWidth = 0;
+        int prevBackHeight = 0;
+        bool resizedForMenu = false;
 
         int xpCurrent = 0;
         int xpToNext = 800; // total XP required to fill the evolution bar
@@ -72,6 +85,8 @@ namespace Final_Project
         {
 
             prevKeyboardState = Keyboard.GetState();
+            // initialize mouse state to avoid missing the first click edge
+            prevMouseState = Mouse.GetState();
 
             base.Initialize();
         }
@@ -158,7 +173,12 @@ namespace Final_Project
             evoButtonSprite = Content.Load<Texture2D>("Other Textures/EvolveBtn");
             evoMenuBgSprite = Content.Load<Texture2D>("BackGrounds/Evolution Background");
             evoCloseSprite = Content.Load<Texture2D>("Other Textures/ExitBtn");
-            evoConfirmSprite = Content.Load<Texture2D>("Other Textures/ConfirmBtn");
+            
+            flagellaSprites = new Texture2D[] {
+                Content.Load<Texture2D>("Perm Evolutions/Flagella(1v)"),
+                Content.Load<Texture2D>("Perm Evolutions/Flagella(2v)"),
+                Content.Load<Texture2D>("Perm Evolutions/Flagella(3v)")
+            };
         }
 
         protected override void Update(GameTime gameTime)
@@ -167,6 +187,90 @@ namespace Final_Project
             var ks = Keyboard.GetState();
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || ks.IsKeyDown(Keys.Escape))
                 Exit();
+
+            // If evolution menu is open, pause world updates and only handle menu input (close button + selections)
+            var msEarly = Mouse.GetState();
+            if (evolutionMenuOpen)
+            {
+                var vpEarly = GraphicsDevice.Viewport;
+                if (evoMenuBgSprite != null)
+                {
+                    int menuW = evoMenuBgSprite.Width;
+                    int menuH = evoMenuBgSprite.Height;
+                    int scaledW = menuW;
+                    int scaledH = menuH;
+                    int menuX = (vpEarly.Width - scaledW) / 2;
+                    int menuY = (vpEarly.Height - scaledH) / 2;
+                    int closeW = evoCloseSprite != null ? Math.Max(8, (int)(evoCloseSprite.Width * 0.25f)) : 0;
+                    int closeH = evoCloseSprite != null ? Math.Max(8, (int)(evoCloseSprite.Height * 0.25f)) : 0;
+                    int closePad = 12; // a little further from the corner
+                    Rectangle closeRect = new Rectangle(menuX + scaledW - closeW - closePad, menuY + closePad, closeW, closeH);
+
+                    // columns
+                    int colCount = 4;
+                    int colW = scaledW / colCount;
+                    Rectangle firstColRect = new Rectangle(menuX + 0 * colW, menuY, colW, scaledH);
+                    Rectangle secondColRect = new Rectangle(menuX + 1 * colW, menuY, colW, scaledH);
+
+                    if (msEarly.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
+                    {
+                        // close
+                        if (closeRect.Contains(msEarly.Position))
+                        {
+                            evolutionMenuOpen = false;
+                            if (resizedForMenu)
+                            {
+                                _graphics.PreferredBackBufferWidth = Math.Max(1, prevBackWidth);
+                                _graphics.PreferredBackBufferHeight = Math.Max(1, prevBackHeight);
+                                _graphics.ApplyChanges();
+                                resizedForMenu = false;
+                            }
+                        }
+                        // first column: size increase
+                        else if (firstColRect.Contains(msEarly.Position))
+                        {
+                            if (currentLevel < maxLevel)
+                            {
+                                currentLevel++;
+                                float newScale = baseCellScale + (currentLevel - 1) * 0.06f;
+                                cell.SetSprites(levelSpriteSets[currentLevel - 1], newScale);
+                                float multiplier = 2f;
+                                xpToNext = Math.Max(xpToNext + 1, (int)(xpToNext * multiplier));
+                            }
+                            xpCurrent = 0;
+                            xpFull = false;
+                            evolutionMenuOpen = false;
+                            if (resizedForMenu)
+                            {
+                                _graphics.PreferredBackBufferWidth = Math.Max(1, prevBackWidth);
+                                _graphics.PreferredBackBufferHeight = Math.Max(1, prevBackHeight);
+                                _graphics.ApplyChanges();
+                                resizedForMenu = false;
+                            }
+                        }
+                        // second column: attach flagella
+                        else if (secondColRect.Contains(msEarly.Position))
+                        {
+                            hasFlagella = true;
+                            xpCurrent = 0;
+                            xpFull = false;
+                            evolutionMenuOpen = false;
+                            if (resizedForMenu)
+                            {
+                                _graphics.PreferredBackBufferWidth = Math.Max(1, prevBackWidth);
+                                _graphics.PreferredBackBufferHeight = Math.Max(1, prevBackHeight);
+                                _graphics.ApplyChanges();
+                                resizedForMenu = false;
+                            }
+                        }
+                    }
+                }
+
+                prevMouseState = msEarly;
+                prevKeyboardState = ks;
+                base.Update(gameTime);
+                return;
+            }
 
             // Boost input: space consumes XP and triggers a short directional boost
             if (ks.IsKeyDown(Keys.Space) && !prevKeyboardState.IsKeyDown(Keys.Space))
@@ -193,6 +297,34 @@ namespace Final_Project
             }
 
             cell.Update(gameTime);
+
+            // animate flagella if attached
+            if (hasFlagella && flagellaSprites != null && flagellaSprites.Length > 0)
+            {
+                flagellaAnimTimer += dt;
+                if (flagellaAnimTimer >= flagellaAnimSpeed)
+                {
+                    flagellaAnimTimer = 0f;
+                    flagellaIndex = (flagellaIndex + 1) % flagellaSprites.Length;
+                }
+            }
+
+            // smooth rotation to face opposite of movement (so flagella sits at the back)
+            if (hasFlagella)
+            {
+                Vector2 v = cell.Velocity;
+                if (v.LengthSquared() > 0.01f)
+                {
+                    float target = (float)Math.Atan2(v.Y, v.X) + MathHelper.Pi; // back of cell
+                    float diff = MathHelper.WrapAngle(target - flagellaAngle);
+                    flagellaAngle += diff * flagellaRotationSmoothing;
+                }
+                else
+                {
+                    float diff = MathHelper.WrapAngle(0f - flagellaAngle);
+                    flagellaAngle += diff * flagellaReturnSmoothing;
+                }
+            }
 
             // compute cell center for virus targeting and collision checks
             var cb = cell.Bounds;
@@ -313,9 +445,8 @@ namespace Final_Project
             // if XP bar full show evo button; clicking opens menu
             if (!evolutionMenuOpen && xpFull)
             {
-                int barX = (GraphicsDevice.Viewport.Width - xpBarWidth) / 2;
-                int barY = GraphicsDevice.Viewport.Height - xpBarHeight - 10;
-                Rectangle evoBtnRect = new Rectangle(570, 420, 40, 40);
+                // use the exact rectangle provided by the user for the evo button
+                evoBtnRect = new Rectangle(570, 420, 40, 40);
                 if (ms.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
                 {
                     if (evoBtnRect.Contains(ms.Position))
@@ -327,38 +458,51 @@ namespace Final_Project
 
             if (evolutionMenuOpen)
             {
-                // menu centered
+                // menu centered and scaled to fit viewport if too large
                 var vp = GraphicsDevice.Viewport;
-                int menuW = evoMenuBgSprite.Width;
-                int menuH = evoMenuBgSprite.Height;
-                int menuX = (vp.Width - menuW) / 2;
-                int menuY = (vp.Height - menuH) / 2;
-
-                Rectangle closeRect = new Rectangle(menuX + menuW - evoCloseSprite.Width - 8, menuY + 8, evoCloseSprite.Width, evoCloseSprite.Height);
-                Rectangle confirmRect = new Rectangle(menuX + (menuW - evoConfirmSprite.Width) / 2, menuY + menuH - evoConfirmSprite.Height - 16, evoConfirmSprite.Width, evoConfirmSprite.Height);
-
-                if (ms.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
+                if (evoMenuBgSprite != null)
                 {
-                    if (closeRect.Contains(ms.Position))
+                    int menuW = evoMenuBgSprite.Width;
+                    int menuH = evoMenuBgSprite.Height;
+
+                    // If we haven't resized the window to match the menu, do so now.
+                    if (!resizedForMenu)
                     {
-                        evolutionMenuOpen = false;
+                        prevBackWidth = _graphics.PreferredBackBufferWidth;
+                        prevBackHeight = _graphics.PreferredBackBufferHeight;
+                        _graphics.PreferredBackBufferWidth = menuW;
+                        _graphics.PreferredBackBufferHeight = menuH;
+                        _graphics.ApplyChanges();
+                        resizedForMenu = true;
                     }
-                    else if (confirmRect.Contains(ms.Position))
+
+                    // Since window may have been resized, refresh viewport
+                    vp = GraphicsDevice.Viewport;
+
+                    int scaledW = menuW;
+                    int scaledH = menuH;
+                    int menuX = (vp.Width - scaledW) / 2;
+                    int menuY = (vp.Height - scaledH) / 2;
+
+                    int closeW = evoCloseSprite != null ? Math.Max(8, evoCloseSprite.Width / 2) : 0; // make exit smaller
+                    int closeH = evoCloseSprite != null ? Math.Max(8, evoCloseSprite.Height / 2) : 0;
+                    int closePad = 8;
+                    Rectangle closeRect = new Rectangle(menuX + scaledW - closeW - closePad, menuY + closePad, closeW, closeH);
+
+                    if (ms.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
                     {
-                        // perform evolution if possible
-                        if (currentLevel < maxLevel)
+                        if (closeRect.Contains(ms.Position))
                         {
-                            currentLevel++;
-                            float newScale = baseCellScale + (currentLevel - 1) * 0.06f;
-                            cell.SetSprites(levelSpriteSets[currentLevel - 1], newScale);
-                            // make next evolution harder
-                            float multiplier = 2f;
-                            xpToNext = Math.Max(xpToNext + 1, (int)(xpToNext * multiplier));
+                            evolutionMenuOpen = false;
+                            // restore original window size
+                            if (resizedForMenu)
+                            {
+                                _graphics.PreferredBackBufferWidth = Math.Max(1, prevBackWidth);
+                                _graphics.PreferredBackBufferHeight = Math.Max(1, prevBackHeight);
+                                _graphics.ApplyChanges();
+                                resizedForMenu = false;
+                            }
                         }
-                        // reset xp and flags
-                        xpCurrent = 0;
-                        xpFull = false;
-                        evolutionMenuOpen = false;
                     }
                 }
             }
@@ -391,6 +535,28 @@ namespace Final_Project
 
             
             virus.Draw(_spriteBatch);
+
+            // draw flagella attached to cell (world space) close to the center (textures pre-rotated at ~5 o'clock)
+            if (hasFlagella && flagellaSprites != null && flagellaSprites.Length > 0)
+            {
+                var fb = flagellaSprites[flagellaIndex % flagellaSprites.Length];
+                // compute cell center and place flagella so its inner edge sits on the cell circumference
+                var cb = cell.Bounds;
+                Vector2 cCenter = cell.Position + new Vector2(cb.Width / 2f, cb.Height / 2f);
+                // diagonal vector (bottom-right) normalized
+                // cell radius in pixels
+                float radius = Math.Max(cb.Width, cb.Height) * 0.5f;
+                // draw position: center + offset computed using flagellaAngle so sprite sits at back edge
+                Vector2 dir = new Vector2((float)Math.Cos(flagellaAngle), (float)Math.Sin(flagellaAngle));
+                float spriteHalfHeight = (fb.Height * cell.Scale) * 0.5f;
+                // bring flagella 10 pixels closer to the cell
+                float placeDist = Math.Max(0f, radius + spriteHalfHeight - 2f - 10f);
+                Vector2 place = cCenter + dir * placeDist;
+                Vector2 origin = new Vector2(fb.Width / 2f, fb.Height / 2f);
+                // textures are oriented pointing downwards; rotate by flagellaAngle minus 90deg to align
+                float drawRotation = flagellaAngle - MathHelper.PiOver2;
+                _spriteBatch.Draw(fb, place, null, Color.White, drawRotation, origin, cell.Scale, SpriteEffects.None, 0f);
+            }
 
             foreach (var f in chunkManager.GetFoods()) f.Draw(_spriteBatch, pixel);
             particleManager.Draw(_spriteBatch, pixel);
@@ -427,27 +593,76 @@ namespace Final_Project
                 _spriteBatch.Draw(xpBarEmptySprite, new Rectangle(barX, barY, xpBarWidth, xpBarHeight), Color.White);
             }
 
-            // Draw evo button when XP is full
+            // Draw evo button when XP is full using the exact rectangle requested
             if (xpFull)
             {
-                //Rectangle evoBtnRect = new Rectangle(barX + xpBarWidth + 8, barY, evoButtonSprite.Width, evoButtonSprite.Height);
-                Rectangle evoBtnRect = new Rectangle(570,420,40,40);
-                _spriteBatch.Draw(evoButtonSprite, evoBtnRect, Color.White);
+                evoBtnRect = new Rectangle(570, 420, 40, 40);
+                if (evoButtonSprite != null)
+                {
+                    _spriteBatch.Draw(evoButtonSprite, evoBtnRect, Color.White);
+                }
             }
             
 
             // Draw evolution menu if open
             if (evolutionMenuOpen)
             {
-                int menuW = evoMenuBgSprite.Width;
-                int menuH = evoMenuBgSprite.Height;
-                int menuX = (vp.Width - menuW) / 2;
-                int menuY = (vp.Height - menuH) / 2;
-                _spriteBatch.Draw(evoMenuBgSprite, new Rectangle(menuX, menuY, menuW, menuH), Color.White);
-                // close button
-                _spriteBatch.Draw(evoCloseSprite, new Vector2(menuX + menuW - evoCloseSprite.Width - 8, menuY + 8), Color.White);
-                // confirm (evolve)
-                _spriteBatch.Draw(evoConfirmSprite, new Vector2(menuX + (menuW - evoConfirmSprite.Width) / 2, menuY + menuH - evoConfirmSprite.Height - 16), Color.White);
+                if (evoMenuBgSprite != null)
+                {
+                    int menuW = evoMenuBgSprite.Width;
+                    int menuH = evoMenuBgSprite.Height;
+                    float scaleX = (vp.Width * 0.9f) / menuW;
+                    float scaleY = (vp.Height * 0.9f) / menuH;
+                    float menuScale = Math.Min(1f, Math.Min(scaleX, scaleY));
+
+                    int scaledW = Math.Max(1, (int)(menuW * menuScale));
+                    int scaledH = Math.Max(1, (int)(menuH * menuScale));
+                    int menuX = (vp.Width - scaledW) / 2;
+                    int menuY = (vp.Height - scaledH) / 2;
+
+                    _spriteBatch.Draw(evoMenuBgSprite, new Rectangle(menuX, menuY, scaledW, scaledH), Color.White);
+
+                    // draw preview in first column: show the sprite for the next level
+                    int colCount = 4;
+                    int colW = scaledW / colCount;
+                    Rectangle firstColRect = new Rectangle(menuX + 0 * colW, menuY, colW, scaledH);
+                    if (currentLevel < maxLevel)
+                    {
+                        var previewSet = levelSpriteSets[currentLevel]; // next level set
+                        if (previewSet != null && previewSet.Length > 0)
+                        {
+                            var tex = previewSet[0];
+                            // compute target area centered inside first column
+                            float previewScale = baseCellScale + (currentLevel) * 0.06f; // scale for next level
+                            int drawW = (int)(tex.Width * previewScale);
+                            int drawH = (int)(tex.Height * previewScale);
+                            int offset = Math.Max(4, firstColRect.Width / 10); // small right shift
+                            int drawX = firstColRect.X + (firstColRect.Width - drawW) / 2 + offset;
+                            int drawY = firstColRect.Y + (firstColRect.Height - drawH) / 2;
+                            _spriteBatch.Draw(tex, new Rectangle(drawX, drawY, drawW, drawH), Color.White);
+                        }
+                    }
+
+                    // draw second column preview: flagella (use first flagella texture)
+                    Rectangle secondColRect = new Rectangle(menuX + 1 * colW, menuY, colW, scaledH);
+                    if (flagellaSprites != null && flagellaSprites.Length > 0)
+                    {
+                        var ftex = flagellaSprites[0];
+                        int fw = Math.Min(colW - 16, ftex.Width);
+                        int fh = Math.Min(scaledH - 16, ftex.Height);
+                        int fx = secondColRect.X + (secondColRect.Width - fw) / 2;
+                        int fy = secondColRect.Y + (secondColRect.Height - fh) / 2;
+                        _spriteBatch.Draw(ftex, new Rectangle(fx, fy, fw, fh), Color.White);
+                    }
+
+                    if (evoCloseSprite != null)
+                    {
+                        int closeW = Math.Max(8, (int)(evoCloseSprite.Width * 0.25f));
+                        int closeH = Math.Max(8, (int)(evoCloseSprite.Height * 0.25f));
+                        int closePad = 12;
+                        _spriteBatch.Draw(evoCloseSprite, new Rectangle(menuX + scaledW - closeW - closePad, menuY + closePad, closeW, closeH), Color.White);
+                    }
+                }
             }
 
             _spriteBatch.End();

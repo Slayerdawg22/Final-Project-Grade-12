@@ -13,6 +13,18 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin ../../../../Downloads/Flagella(1v).png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:../../../../Downloads/Flagella(1v).png;Perm Evolutions/Flagella(1v).png
+
 #begin BackGrounds/Evolution Background.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -325,7 +337,7 @@
 /processorParam:TextureFormat=Color
 /build:Other Textures/XpBar.png
 
-#begin Perm Evolutions/Flagella(1).png
+#begin Perm Evolutions/Flagella(2v).png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -335,9 +347,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Perm Evolutions/Flagella(1).png
+/build:Perm Evolutions/Flagella(2v).png
 
-#begin Perm Evolutions/Flagella(2).png
+#begin Perm Evolutions/Flagella(3v).png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -347,19 +359,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Perm Evolutions/Flagella(2).png
-
-#begin Perm Evolutions/Flagella(3).png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Perm Evolutions/Flagella(3).png
+/build:Perm Evolutions/Flagella(3v).png
 
 #begin Rocks/MedRock(1).png
 /importer:TextureImporter
