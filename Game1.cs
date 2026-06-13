@@ -30,6 +30,7 @@ namespace Final_Project
         Texture2D evoCloseSprite;
         Texture2D[] flagellaSprites;
         bool hasFlagella = false;
+        float flagellaBaseScale = 0.25f; // Base flagella scale for level 1
         Texture2D chlorophyllSprite;
         bool hasChlorophyll = false;
         float flagellaAnimTimer = 0f;
@@ -232,6 +233,7 @@ namespace Final_Project
                         else if (secondColRect.Contains(msEarly.Position))
                         {
                             hasFlagella = true;
+                            cell.Speed *= 1.35f; // Boost speed by 35% permanently
                             xpCurrent = 0;
                             xpFull = false;
                             evolutionMenuOpen = false;
@@ -413,6 +415,20 @@ namespace Final_Project
                 }
             }
 
+            // Passive XP gain from chlorophyll
+            if (hasChlorophyll)
+            {
+                float passiveXpPerSecond = 60f;
+                int passiveXpGain = (int)(passiveXpPerSecond * dt);
+                xpCurrent = Math.Min(xpToNext, xpCurrent + passiveXpGain);
+
+                if (xpCurrent >= xpToNext)
+                {
+                    xpCurrent = xpToNext;
+                    xpFull = true;
+                }
+            }
+
             prevKeyboardState = ks;
             var ms = Mouse.GetState();
             if (!evolutionMenuOpen && xpFull)
@@ -506,26 +522,28 @@ namespace Final_Project
                 Vector2 cCenter = cell.Position + new Vector2(cb.Width / 2f, cb.Height / 2f);
                 float radius = Math.Max(cb.Width, cb.Height) * 0.5f;
                 Vector2 dir = new Vector2((float)Math.Cos(flagellaAngle), (float)Math.Sin(flagellaAngle));
-                float spriteHalfHeight = (fb.Height * cell.Scale) * 0.5f;
+                // Calculate flagella scale: base scale * 1.25^(currentLevel-1) for 25% growth per level
+                float flagellaScale = flagellaBaseScale * (float)Math.Pow(1.25f, currentLevel - 1);
+                float spriteHalfHeight = (fb.Height * flagellaScale) * 0.5f;
                 float placeDist = Math.Max(0f, radius + spriteHalfHeight - 2f - 10f);
                 Vector2 place = cCenter + dir * placeDist;
                 Vector2 origin = new Vector2(fb.Width / 2f, fb.Height / 2f);
                 float drawRotation = flagellaAngle - MathHelper.PiOver2;
-                _spriteBatch.Draw(fb, place, null, Color.White, drawRotation, origin, cell.Scale, SpriteEffects.None, 0f);
+                _spriteBatch.Draw(fb, place, null, Color.White, drawRotation, origin, flagellaScale, SpriteEffects.None, 0f);
             }
 
             if (hasChlorophyll && chlorophyllSprite != null)
             {
-                // Draw chlorophyll at 50% of its original texture size using a destination rectangle
+                
                 var cb2 = cell.Bounds;
                 Vector2 cCenter2 = cell.Position + new Vector2(cb2.Width / 2f, cb2.Height / 2f);
                 float radius2 = Math.Max(cb2.Width, cb2.Height) * 0.5f;
-                float angle = MathHelper.ToRadians(240f); // ~8 o'clock
+                float angle = MathHelper.ToRadians(400f); // Bottom-right corner (~45 degrees)
                 Vector2 dir2 = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
 
-                int destW = Math.Max(1, chlorophyllSprite.Width / 2);
-                int destH = Math.Max(1, chlorophyllSprite.Height / 2);
-                float placeDist2 = radius2 - (destH * 0.5f) - 2f;
+                int destW = Math.Max(1, chlorophyllSprite.Width / 8);
+                int destH = Math.Max(1, chlorophyllSprite.Height / 8);
+                float placeDist2 = radius2 - (destH * 0.5f) - 10f;
                 Vector2 place2 = cCenter2 + dir2 * placeDist2;
                 int drawX = (int)(place2.X - destW / 2f);
                 int drawY = (int)(place2.Y - destH / 2f);
