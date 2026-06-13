@@ -30,6 +30,8 @@ namespace Final_Project
         Texture2D evoCloseSprite;
         Texture2D[] flagellaSprites;
         bool hasFlagella = false;
+        Texture2D chlorophyllSprite;
+        bool hasChlorophyll = false;
         float flagellaAnimTimer = 0f;
         float flagellaAnimSpeed = 0.12f;
         int flagellaIndex = 0;
@@ -160,6 +162,7 @@ namespace Final_Project
                 Content.Load<Texture2D>("Perm Evolutions/Flagella(2v)"),
                 Content.Load<Texture2D>("Perm Evolutions/Flagella(3v)")
             };
+            chlorophyllSprite = Content.Load<Texture2D>("Perm Evolutions/Chlorophyll");
         }
 
         protected override void Update(GameTime gameTime)
@@ -190,6 +193,7 @@ namespace Final_Project
                     int colW = scaledW / colCount;
                     Rectangle firstColRect = new Rectangle(menuX + 0 * colW, menuY, colW, scaledH);
                     Rectangle secondColRect = new Rectangle(menuX + 1 * colW, menuY, colW, scaledH);
+                    Rectangle thirdColRect = new Rectangle(menuX + 2 * colW, menuY, colW, scaledH);
 
                     if (msEarly.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
                     {
@@ -228,6 +232,20 @@ namespace Final_Project
                         else if (secondColRect.Contains(msEarly.Position))
                         {
                             hasFlagella = true;
+                            xpCurrent = 0;
+                            xpFull = false;
+                            evolutionMenuOpen = false;
+                            if (resizedForMenu)
+                            {
+                                _graphics.PreferredBackBufferWidth = Math.Max(1, prevBackWidth);
+                                _graphics.PreferredBackBufferHeight = Math.Max(1, prevBackHeight);
+                                _graphics.ApplyChanges();
+                                resizedForMenu = false;
+                            }
+                        }
+                        else if (thirdColRect.Contains(msEarly.Position))
+                        {
+                            hasChlorophyll = true;
                             xpCurrent = 0;
                             xpFull = false;
                             evolutionMenuOpen = false;
@@ -496,6 +514,24 @@ namespace Final_Project
                 _spriteBatch.Draw(fb, place, null, Color.White, drawRotation, origin, cell.Scale, SpriteEffects.None, 0f);
             }
 
+            if (hasChlorophyll && chlorophyllSprite != null)
+            {
+                // Draw chlorophyll at 50% of its original texture size using a destination rectangle
+                var cb2 = cell.Bounds;
+                Vector2 cCenter2 = cell.Position + new Vector2(cb2.Width / 2f, cb2.Height / 2f);
+                float radius2 = Math.Max(cb2.Width, cb2.Height) * 0.5f;
+                float angle = MathHelper.ToRadians(240f); // ~8 o'clock
+                Vector2 dir2 = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
+
+                int destW = Math.Max(1, chlorophyllSprite.Width / 2);
+                int destH = Math.Max(1, chlorophyllSprite.Height / 2);
+                float placeDist2 = radius2 - (destH * 0.5f) - 2f;
+                Vector2 place2 = cCenter2 + dir2 * placeDist2;
+                int drawX = (int)(place2.X - destW / 2f);
+                int drawY = (int)(place2.Y - destH / 2f);
+                _spriteBatch.Draw(chlorophyllSprite, new Rectangle(drawX, drawY, destW, destH), Color.White);
+            }
+
             foreach (var f in chunkManager.GetFoods()) f.Draw(_spriteBatch, pixel);
             particleManager.Draw(_spriteBatch, pixel);
             _spriteBatch.End();
@@ -580,6 +616,22 @@ namespace Final_Project
                         int fx = secondColRect.X + (secondColRect.Width - fw) / 2;
                         int fy = secondColRect.Y + (secondColRect.Height - fh) / 2;
                         _spriteBatch.Draw(ftex, new Rectangle(fx, fy, fw, fh), Color.White);
+                    }
+
+                    // Third column: show chlorophyll preview if available
+                    Rectangle thirdColRect = new Rectangle(menuX + 2 * colW, menuY, colW, scaledH);
+                    if (chlorophyllSprite != null)
+                    {
+                        float pad = 16f;
+                        float availableW = Math.Max(1, thirdColRect.Width - (int)pad);
+                        float availableH = Math.Max(1, thirdColRect.Height - (int)pad);
+                        // Force chlorophyll preview to be at most 50% of its original size
+                        float scaleC = Math.Min(0.5f, Math.Min(availableW / chlorophyllSprite.Width, availableH / chlorophyllSprite.Height));
+                        int cw = Math.Max(1, (int)(chlorophyllSprite.Width * scaleC));
+                        int ch = Math.Max(1, (int)(chlorophyllSprite.Height * scaleC));
+                        int cx = thirdColRect.X + (thirdColRect.Width - cw) / 2;
+                        int cy = thirdColRect.Y + (thirdColRect.Height - ch) / 2;
+                        _spriteBatch.Draw(chlorophyllSprite, new Rectangle(cx, cy, cw, ch), Color.White);
                     }
 
                     if (evoCloseSprite != null)
