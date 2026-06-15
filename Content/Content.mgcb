@@ -13,7 +13,7 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin ../../../../Downloads/Chlorophyll.png
+#begin Perm Evolutions/Chlorophyll.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -23,9 +23,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:../../../../Downloads/Chlorophyll.png;Perm Evolutions/Chlorophyll.png
+/build:Perm Evolutions/Chlorophyll.png
 
-#begin ../../../../Downloads/Flagella(1v).png
+#begin Perm Evolutions/Flagella(1v).png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -35,7 +35,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:../../../../Downloads/Flagella(1v).png;Perm Evolutions/Flagella(1v).png
+/build:Perm Evolutions/Flagella(1v).png
 
 #begin BackGrounds/Evolution Background.png
 /importer:TextureImporter

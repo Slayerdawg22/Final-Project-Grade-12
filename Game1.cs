@@ -30,7 +30,7 @@ namespace Final_Project
         Texture2D evoCloseSprite;
         Texture2D[] flagellaSprites;
         bool hasFlagella = false;
-        float flagellaBaseScale = 0.25f; // Base flagella scale for level 1
+        float flagellaBaseScale = 0.25f;
         Texture2D chlorophyllSprite;
         bool hasChlorophyll = false;
         float flagellaAnimTimer = 0f;
@@ -45,7 +45,7 @@ namespace Final_Project
         int prevBackHeight = 0;
         bool resizedForMenu = false;
 
-        int xpCurrent = 0;
+        int xpCurrent = 800;
         int xpToNext = 800;
         int xpBarWidth = 250;
         int xpBarHeight = 10;
@@ -433,7 +433,7 @@ namespace Final_Project
             var ms = Mouse.GetState();
             if (!evolutionMenuOpen && xpFull)
             {
-                evoBtnRect = new Rectangle(570, 420, 40, 40);
+                evoBtnRect = new Rectangle(560, 420, 125, 50);
                 if (ms.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
                 {
                     if (evoBtnRect.Contains(ms.Position))
@@ -582,7 +582,7 @@ namespace Final_Project
 
             if (xpFull)
             {
-                evoBtnRect = new Rectangle(570, 420, 40, 40);
+                evoBtnRect = new Rectangle(560, 420, 125, 50);
                 if (evoButtonSprite != null)
                 {
                     _spriteBatch.Draw(evoButtonSprite, evoBtnRect, Color.White);
