@@ -201,13 +201,6 @@ namespace Final_Project
                         if (closeRect.Contains(msEarly.Position))
                         {
                             evolutionMenuOpen = false;
-                            if (resizedForMenu)
-                            {
-                                _graphics.PreferredBackBufferWidth = Math.Max(1, prevBackWidth);
-                                _graphics.PreferredBackBufferHeight = Math.Max(1, prevBackHeight);
-                                _graphics.ApplyChanges();
-                                resizedForMenu = false;
-                            }
                         }
                         else if (firstColRect.Contains(msEarly.Position))
                         {
@@ -222,28 +215,14 @@ namespace Final_Project
                             xpCurrent = 0;
                             xpFull = false;
                             evolutionMenuOpen = false;
-                            if (resizedForMenu)
-                            {
-                                _graphics.PreferredBackBufferWidth = Math.Max(1, prevBackWidth);
-                                _graphics.PreferredBackBufferHeight = Math.Max(1, prevBackHeight);
-                                _graphics.ApplyChanges();
-                                resizedForMenu = false;
-                            }
                         }
                         else if (secondColRect.Contains(msEarly.Position))
                         {
                             hasFlagella = true;
-                            cell.Speed *= 1.35f; // Boost speed by 35% permanently
+                            cell.Speed *= 1.35f;
                             xpCurrent = 0;
                             xpFull = false;
                             evolutionMenuOpen = false;
-                            if (resizedForMenu)
-                            {
-                                _graphics.PreferredBackBufferWidth = Math.Max(1, prevBackWidth);
-                                _graphics.PreferredBackBufferHeight = Math.Max(1, prevBackHeight);
-                                _graphics.ApplyChanges();
-                                resizedForMenu = false;
-                            }
                         }
                         else if (thirdColRect.Contains(msEarly.Position))
                         {
@@ -251,13 +230,6 @@ namespace Final_Project
                             xpCurrent = 0;
                             xpFull = false;
                             evolutionMenuOpen = false;
-                            if (resizedForMenu)
-                            {
-                                _graphics.PreferredBackBufferWidth = Math.Max(1, prevBackWidth);
-                                _graphics.PreferredBackBufferHeight = Math.Max(1, prevBackHeight);
-                                _graphics.ApplyChanges();
-                                resizedForMenu = false;
-                            }
                         }
                     }
                 }
@@ -451,16 +423,6 @@ namespace Final_Project
                     int menuW = evoMenuBgSprite.Width;
                     int menuH = evoMenuBgSprite.Height;
 
-                    if (!resizedForMenu)
-                    {
-                        prevBackWidth = _graphics.PreferredBackBufferWidth;
-                        prevBackHeight = _graphics.PreferredBackBufferHeight;
-                        _graphics.PreferredBackBufferWidth = menuW;
-                        _graphics.PreferredBackBufferHeight = menuH;
-                        _graphics.ApplyChanges();
-                        resizedForMenu = true;
-                    }
-
                     vp = GraphicsDevice.Viewport;
 
                     int scaledW = menuW;
@@ -478,13 +440,6 @@ namespace Final_Project
                         if (closeRect.Contains(ms.Position))
                         {
                             evolutionMenuOpen = false;
-                            if (resizedForMenu)
-                            {
-                                _graphics.PreferredBackBufferWidth = Math.Max(1, prevBackWidth);
-                                _graphics.PreferredBackBufferHeight = Math.Max(1, prevBackHeight);
-                                _graphics.ApplyChanges();
-                                resizedForMenu = false;
-                            }
                         }
                     }
                 }
@@ -595,9 +550,7 @@ namespace Final_Project
                 {
                     int menuW = evoMenuBgSprite.Width;
                     int menuH = evoMenuBgSprite.Height;
-                    float scaleX = (vp.Width * 0.9f) / menuW;
-                    float scaleY = (vp.Height * 0.9f) / menuH;
-                    float menuScale = Math.Min(1f, Math.Min(scaleX, scaleY));
+                    float menuScale = (float)vp.Width / menuW;
 
                     int scaledW = Math.Max(1, (int)(menuW * menuScale));
                     int scaledH = Math.Max(1, (int)(menuH * menuScale));
@@ -615,7 +568,7 @@ namespace Final_Project
                         if (previewSet != null && previewSet.Length > 0)
                         {
                             var tex = previewSet[0];
-                            float previewScale = baseCellScale + (currentLevel) * 0.06f;
+                            float previewScale = (baseCellScale + (currentLevel) * 0.06f) * 0.75f;
                             int drawW = (int)(tex.Width * previewScale);
                             int drawH = (int)(tex.Height * previewScale);
                             int offset = Math.Max(4, firstColRect.Width / 10);
@@ -629,8 +582,8 @@ namespace Final_Project
                     if (flagellaSprites != null && flagellaSprites.Length > 0)
                     {
                         var ftex = flagellaSprites[0];
-                        int fw = Math.Min(colW - 16, ftex.Width);
-                        int fh = Math.Min(scaledH - 16, ftex.Height);
+                        int fw = Math.Min((int)(colW * 0.5f) - 16, ftex.Width);
+                        int fh = Math.Min((int)(scaledH * 0.5f) - 16, ftex.Height);
                         int fx = secondColRect.X + (secondColRect.Width - fw) / 2;
                         int fy = secondColRect.Y + (secondColRect.Height - fh) / 2;
                         _spriteBatch.Draw(ftex, new Rectangle(fx, fy, fw, fh), Color.White);
@@ -643,8 +596,7 @@ namespace Final_Project
                         float pad = 16f;
                         float availableW = Math.Max(1, thirdColRect.Width - (int)pad);
                         float availableH = Math.Max(1, thirdColRect.Height - (int)pad);
-                        // Force chlorophyll preview to be at most 50% of its original size
-                        float scaleC = Math.Min(0.5f, Math.Min(availableW / chlorophyllSprite.Width, availableH / chlorophyllSprite.Height));
+                        float scaleC = Math.Min(0.375f, Math.Min(availableW / chlorophyllSprite.Width, availableH / chlorophyllSprite.Height));
                         int cw = Math.Max(1, (int)(chlorophyllSprite.Width * scaleC));
                         int ch = Math.Max(1, (int)(chlorophyllSprite.Height * scaleC));
                         int cx = thirdColRect.X + (thirdColRect.Width - cw) / 2;
@@ -654,8 +606,8 @@ namespace Final_Project
 
                     if (evoCloseSprite != null)
                     {
-                        int closeW = Math.Max(8, (int)(evoCloseSprite.Width * 0.25f));
-                        int closeH = Math.Max(8, (int)(evoCloseSprite.Height * 0.25f));
+                        int closeW = Math.Max(8, (int)(evoCloseSprite.Width * 0.0625f));
+                        int closeH = Math.Max(8, (int)(evoCloseSprite.Height * 0.0625f));
                         int closePad = 12;
                         _spriteBatch.Draw(evoCloseSprite, new Rectangle(menuX + scaledW - closeW - closePad, menuY + closePad, closeW, closeH), Color.White);
                     }
