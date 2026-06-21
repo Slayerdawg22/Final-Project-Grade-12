@@ -13,6 +13,18 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin BackGrounds/DeadScreen.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:BackGrounds/DeadScreen.png
+
 #begin BackGrounds/Evolution Background.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -24,6 +36,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:BackGrounds/Evolution Background.png
+
+#begin BackGrounds/StartScreen.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:BackGrounds/StartScreen.png
 
 #begin Cell Textures/nucleus.png
 /importer:TextureImporter

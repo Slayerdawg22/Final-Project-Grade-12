@@ -6,10 +6,13 @@ using System.Collections.Generic;
 
 namespace Final_Project
 {
+    public enum GameState { TitleScreen, Playing, GameOver }
+
     public class Game1 : Game
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
+        private GameState gameState = GameState.TitleScreen;
 
         Texture2D[] cellSprites;
         Texture2D nucleusSprite;
@@ -20,6 +23,9 @@ namespace Final_Project
         Texture2D heartSprite;
         int maxLives = 3;
         int currentLives = 3;
+
+        Texture2D titleScreenTexture;
+        Texture2D endScreenTexture;
 
         Texture2D xpBarEmptySprite;
 
@@ -87,6 +93,9 @@ namespace Final_Project
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            titleScreenTexture = Content.Load<Texture2D>("BackGrounds/StartScreen");
+            endScreenTexture = Content.Load<Texture2D>("BackGrounds/DeadScreen");
 
             nucleusSprite = Content.Load<Texture2D>("Cell Textures/nucleus");
 
@@ -170,39 +179,74 @@ namespace Final_Project
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             var ks = Keyboard.GetState();
+            var ms = Mouse.GetState();
+
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || ks.IsKeyDown(Keys.Escape))
                 Exit();
 
-            var msEarly = Mouse.GetState();
+            if (gameState == GameState.TitleScreen)
+            {
+                Rectangle startBtn = new Rectangle(180, 300, 400, 80);
+
+                if ((ks.IsKeyDown(Keys.Space) && !prevKeyboardState.IsKeyDown(Keys.Space)) ||
+                    (ms.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released && startBtn.Contains(ms.Position)))
+                {
+                    gameState = GameState.Playing;
+                    currentLives = maxLives;
+                    xpCurrent = 0;
+                    xpFull = false;
+                    currentLevel = 1;
+                    cell.SetSprites(levelSpriteSets[currentLevel - 1], baseCellScale);
+                }
+                prevMouseState = ms;
+                prevKeyboardState = ks;
+                base.Update(gameTime);
+                return;
+            }
+
+            if (gameState == GameState.GameOver)
+            {
+                Rectangle restartBtn = new Rectangle(180, 300, 400, 80);
+
+                if ((ks.IsKeyDown(Keys.Space) && !prevKeyboardState.IsKeyDown(Keys.Space)) ||
+                    (ms.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released && restartBtn.Contains(ms.Position)))
+                {
+                    gameState = GameState.Playing;
+                    currentLives = maxLives;
+                    xpCurrent = 0;
+                    xpFull = false;
+                    currentLevel = 1;
+                    cell.SetSprites(levelSpriteSets[currentLevel - 1], baseCellScale);
+                    cell.Position = new Vector2(300, 300);
+                    virus.Deactivate();
+                    virusRespawnTimer = virusRespawnDelay;
+                    chunkManager.Update(cell.Position);
+                    rockManager.GenerateRandom();
+                    foodManager.GenerateInitial(rockManager.Rocks);
+                    hasFlagella = false;
+                    hasChlorophyll = false;
+                    evolutionMenuOpen = false;
+                }
+                prevMouseState = ms;
+                prevKeyboardState = ks;
+                base.Update(gameTime);
+                return;
+            }
+
+            var msEarly = ms;
             if (evolutionMenuOpen)
             {
                 var vpEarly = GraphicsDevice.Viewport;
                 if (evoMenuBgSprite != null)
                 {
-                    int menuW = evoMenuBgSprite.Width;
-                    int menuH = evoMenuBgSprite.Height;
-                    int scaledW = menuW;
-                    int scaledH = menuH;
-                    int menuX = (vpEarly.Width - scaledW) / 2;
-                    int menuY = (vpEarly.Height - scaledH) / 2;
-                    int closeW = evoCloseSprite != null ? Math.Max(8, (int)(evoCloseSprite.Width * 0.25f)) : 0;
-                    int closeH = evoCloseSprite != null ? Math.Max(8, (int)(evoCloseSprite.Height * 0.25f)) : 0;
-                    int closePad = 12;
-                    Rectangle closeRect = new Rectangle(menuX + scaledW - closeW - closePad, menuY + closePad, closeW, closeH);
-
-                    int colCount = 4;
-                    int colW = scaledW / colCount;
-                    Rectangle firstColRect = new Rectangle(menuX + 0 * colW, menuY, colW, scaledH);
-                    Rectangle secondColRect = new Rectangle(menuX + 1 * colW, menuY, colW, scaledH);
-                    Rectangle thirdColRect = new Rectangle(menuX + 2 * colW, menuY, colW, scaledH);
+                    Rectangle firstColRect = new Rectangle(0, 30, 190, 200);
+                    Rectangle secondColRect = new Rectangle(210, 30, 190, 200);
+                    Rectangle thirdColRect = new Rectangle(420, 30, 190, 200);
+                    Rectangle fourthColRect = new Rectangle(630, 30, 170, 200);
 
                     if (msEarly.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
                     {
-                        if (closeRect.Contains(msEarly.Position))
-                        {
-                            evolutionMenuOpen = false;
-                        }
-                        else if (firstColRect.Contains(msEarly.Position))
+                        if (firstColRect.Contains(msEarly.Position))
                         {
                             if (currentLevel < maxLevel)
                             {
@@ -337,6 +381,10 @@ namespace Final_Project
                     particleManager.SpawnAt(vCenter, 48, Color.Red, 4f, 1.0f, 1.8f);
 
                     currentLives = Math.Max(0, currentLives - 1);
+                    if (currentLives <= 0)
+                    {
+                        gameState = GameState.GameOver;
+                    }
                     virus.Deactivate();
                     virusRespawnTimer = virusRespawnDelay;
                 }
@@ -402,7 +450,7 @@ namespace Final_Project
             }
 
             prevKeyboardState = ks;
-            var ms = Mouse.GetState();
+            //var ms = Mouse.GetState();
             if (!evolutionMenuOpen && xpFull)
             {
                 evoBtnRect = new Rectangle(560, 420, 125, 50);
@@ -418,29 +466,48 @@ namespace Final_Project
             if (evolutionMenuOpen)
             {
                 var vp = GraphicsDevice.Viewport;
-                if (evoMenuBgSprite != null)
+
+                // Hard-coded button rectangles: 4 categories, 20 pixels apart, centered lower, 200 pixels tall
+                Rectangle levelUpBtn = new Rectangle(30, 110, 180, 200);
+                Rectangle flagellaBtn = new Rectangle(230, 110, 180, 200);
+                Rectangle chlorophyllBtn = new Rectangle(430, 110, 180, 200);
+                Rectangle category4Btn = new Rectangle(630, 110, 180, 200);
+
+                // Exit button: 40x40 at top right corner
+                Rectangle closeRect = new Rectangle(vp.Width - 50, 10, 40, 40);
+
+                if (ms.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
                 {
-                    int menuW = evoMenuBgSprite.Width;
-                    int menuH = evoMenuBgSprite.Height;
-
-                    vp = GraphicsDevice.Viewport;
-
-                    int scaledW = menuW;
-                    int scaledH = menuH;
-                    int menuX = (vp.Width - scaledW) / 2;
-                    int menuY = (vp.Height - scaledH) / 2;
-
-                    int closeW = evoCloseSprite != null ? Math.Max(8, evoCloseSprite.Width / 2) : 0;
-                    int closeH = evoCloseSprite != null ? Math.Max(8, evoCloseSprite.Height / 2) : 0;
-                    int closePad = 8;
-                    Rectangle closeRect = new Rectangle(menuX + scaledW - closeW - closePad, menuY + closePad, closeW, closeH);
-
-                    if (ms.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
+                    if (closeRect.Contains(ms.Position))
                     {
-                        if (closeRect.Contains(ms.Position))
-                        {
-                            evolutionMenuOpen = false;
-                        }
+                        evolutionMenuOpen = false;
+                    }
+                    else if (levelUpBtn.Contains(ms.Position) && currentLevel < maxLevel)
+                    {
+                        // Level up the cell
+                        currentLevel++;
+                        cellSprites = levelSpriteSets[currentLevel - 1];
+                        float newScale = baseCellScale + (currentLevel - 1) * 0.06f;
+                        cell.SetSprites(cellSprites, newScale);
+                        xpCurrent = 0;
+                        xpFull = false;
+                        evolutionMenuOpen = false;
+                    }
+                    else if (flagellaBtn.Contains(ms.Position) && !hasFlagella)
+                    {
+                        // Unlock flagella
+                        hasFlagella = true;
+                        xpCurrent = 0;
+                        xpFull = false;
+                        evolutionMenuOpen = false;
+                    }
+                    else if (chlorophyllBtn.Contains(ms.Position) && !hasChlorophyll)
+                    {
+                        // Unlock chlorophyll
+                        hasChlorophyll = true;
+                        xpCurrent = 0;
+                        xpFull = false;
+                        evolutionMenuOpen = false;
                     }
                 }
             }
@@ -453,6 +520,25 @@ namespace Final_Project
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(new Color(2, 13, 58));
+
+            if (gameState == GameState.TitleScreen)
+            {
+                _spriteBatch.Begin();
+                _spriteBatch.Draw(titleScreenTexture, new Rectangle(0, 0, 800, 400), Color.White);
+                _spriteBatch.End();
+                base.Draw(gameTime);
+                return;
+            }
+
+            if (gameState == GameState.GameOver)
+            {
+                _spriteBatch.Begin();
+                _spriteBatch.Draw(endScreenTexture, new Rectangle(0, 0, 800, 400), Color.White);
+                _spriteBatch.End();
+                base.Draw(gameTime);
+                return;
+            }
+
             MouseState ms = Mouse.GetState();
 
             var vp = GraphicsDevice.Viewport;
@@ -546,71 +632,63 @@ namespace Final_Project
 
             if (evolutionMenuOpen)
             {
+                // Draw background menu
                 if (evoMenuBgSprite != null)
                 {
-                    int menuW = evoMenuBgSprite.Width;
-                    int menuH = evoMenuBgSprite.Height;
-                    float menuScale = (float)vp.Width / menuW;
+                    _spriteBatch.Draw(evoMenuBgSprite, new Rectangle(0, 0, 800, 400), Color.White);
+                }
 
-                    int scaledW = Math.Max(1, (int)(menuW * menuScale));
-                    int scaledH = Math.Max(1, (int)(menuH * menuScale));
-                    int menuX = (vp.Width - scaledW) / 2;
-                    int menuY = (vp.Height - scaledH) / 2;
+                // Hard-coded button rectangles: 4 categories, 20 pixels apart, centered lower, 200 pixels tall
+                Rectangle levelUpBtn = new Rectangle(30, 110, 180, 200);
+                Rectangle flagellaBtn = new Rectangle(230, 110, 180, 200);
+                Rectangle chlorophyllBtn = new Rectangle(430, 110, 180, 200);
+                Rectangle category4Btn = new Rectangle(630, 110, 180, 200);
 
-                    _spriteBatch.Draw(evoMenuBgSprite, new Rectangle(menuX, menuY, scaledW, scaledH), Color.White);
-
-                    int colCount = 4;
-                    int colW = scaledW / colCount;
-                    Rectangle firstColRect = new Rectangle(menuX + 0 * colW, menuY, colW, scaledH);
-                    if (currentLevel < maxLevel)
+                // Draw level up preview in first button
+                if (currentLevel < maxLevel)
+                {
+                    var previewSet = levelSpriteSets[currentLevel];
+                    if (previewSet != null && previewSet.Length > 0)
                     {
-                        var previewSet = levelSpriteSets[currentLevel];
-                        if (previewSet != null && previewSet.Length > 0)
-                        {
-                            var tex = previewSet[0];
-                            float previewScale = (baseCellScale + (currentLevel) * 0.06f) * 0.75f;
-                            int drawW = (int)(tex.Width * previewScale);
-                            int drawH = (int)(tex.Height * previewScale);
-                            int offset = Math.Max(4, firstColRect.Width / 10);
-                            int drawX = firstColRect.X + (firstColRect.Width - drawW) / 2 + offset;
-                            int drawY = firstColRect.Y + (firstColRect.Height - drawH) / 2;
-                            _spriteBatch.Draw(tex, new Rectangle(drawX, drawY, drawW, drawH), Color.White);
-                        }
+                        var tex = previewSet[0];
+                        float previewScale = (baseCellScale + (currentLevel) * 0.06f) * 0.75f;
+                        int drawW = (int)(tex.Width * previewScale);
+                        int drawH = (int)(tex.Height * previewScale);
+                        int drawX = levelUpBtn.X + (levelUpBtn.Width - drawW) / 2;
+                        int drawY = levelUpBtn.Y + (levelUpBtn.Height - drawH) / 2;
+                        _spriteBatch.Draw(tex, new Rectangle(drawX, drawY, drawW, drawH), Color.White);
                     }
+                }
 
-                    Rectangle secondColRect = new Rectangle(menuX + 1 * colW, menuY, colW, scaledH);
-                    if (flagellaSprites != null && flagellaSprites.Length > 0)
-                    {
-                        var ftex = flagellaSprites[0];
-                        int fw = Math.Min((int)(colW * 0.5f) - 16, ftex.Width);
-                        int fh = Math.Min((int)(scaledH * 0.5f) - 16, ftex.Height);
-                        int fx = secondColRect.X + (secondColRect.Width - fw) / 2;
-                        int fy = secondColRect.Y + (secondColRect.Height - fh) / 2;
-                        _spriteBatch.Draw(ftex, new Rectangle(fx, fy, fw, fh), Color.White);
-                    }
+                // Draw flagella preview in second button
+                if (flagellaSprites != null && flagellaSprites.Length > 0)
+                {
+                    var ftex = flagellaSprites[0];
+                    int fw = Math.Min(flagellaBtn.Width - 20, ftex.Width);
+                    int fh = Math.Min(flagellaBtn.Height - 20, ftex.Height);
+                    int fx = flagellaBtn.X + (flagellaBtn.Width - fw) / 2;
+                    int fy = flagellaBtn.Y + (flagellaBtn.Height - fh) / 2;
+                    _spriteBatch.Draw(ftex, new Rectangle(fx, fy, fw, fh), Color.White);
+                }
 
-                    // Third column: show chlorophyll preview if available
-                    Rectangle thirdColRect = new Rectangle(menuX + 2 * colW, menuY, colW, scaledH);
-                    if (chlorophyllSprite != null)
-                    {
-                        float pad = 16f;
-                        float availableW = Math.Max(1, thirdColRect.Width - (int)pad);
-                        float availableH = Math.Max(1, thirdColRect.Height - (int)pad);
-                        float scaleC = Math.Min(0.375f, Math.Min(availableW / chlorophyllSprite.Width, availableH / chlorophyllSprite.Height));
-                        int cw = Math.Max(1, (int)(chlorophyllSprite.Width * scaleC));
-                        int ch = Math.Max(1, (int)(chlorophyllSprite.Height * scaleC));
-                        int cx = thirdColRect.X + (thirdColRect.Width - cw) / 2;
-                        int cy = thirdColRect.Y + (thirdColRect.Height - ch) / 2;
-                        _spriteBatch.Draw(chlorophyllSprite, new Rectangle(cx, cy, cw, ch), Color.White);
-                    }
+                // Draw chlorophyll preview in third button
+                if (chlorophyllSprite != null)
+                {
+                    float pad = 16f;
+                    float availableW = Math.Max(1, chlorophyllBtn.Width - (int)pad);
+                    float availableH = Math.Max(1, chlorophyllBtn.Height - (int)pad);
+                    float scaleC = Math.Min(0.375f, Math.Min(availableW / chlorophyllSprite.Width, availableH / chlorophyllSprite.Height));
+                    int cw = Math.Max(1, (int)(chlorophyllSprite.Width * scaleC));
+                    int ch = Math.Max(1, (int)(chlorophyllSprite.Height * scaleC));
+                    int cx = chlorophyllBtn.X + (chlorophyllBtn.Width - cw) / 2;
+                    int cy = chlorophyllBtn.Y + (chlorophyllBtn.Height - ch) / 2;
+                    _spriteBatch.Draw(chlorophyllSprite, new Rectangle(cx, cy, cw, ch), Color.White);
+                }
 
-                    if (evoCloseSprite != null)
-                    {
-                        int closeW = Math.Max(8, (int)(evoCloseSprite.Width * 0.0625f));
-                        int closeH = Math.Max(8, (int)(evoCloseSprite.Height * 0.0625f));
-                        int closePad = 12;
-                        _spriteBatch.Draw(evoCloseSprite, new Rectangle(menuX + scaledW - closeW - closePad, menuY + closePad, closeW, closeH), Color.White);
-                    }
+                // Draw close button
+                if (evoCloseSprite != null)
+                {
+                    _spriteBatch.Draw(evoCloseSprite, new Rectangle(vp.Width - 50, 10, 40, 40), Color.White);
                 }
             }
 
