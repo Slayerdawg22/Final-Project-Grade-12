@@ -42,6 +42,7 @@ namespace Final_Project
         float flagellaBaseScale = 0.25f;
         Texture2D chlorophyllSprite;
         bool hasChlorophyll = false;
+        Texture2D instructionsTexture;
         float flagellaAnimTimer = 0f;
         float flagellaAnimSpeed = 0.12f;
         int flagellaIndex = 0;
@@ -199,6 +200,7 @@ namespace Final_Project
                 Content.Load<Texture2D>("Perm Evolutions/Flagella(3v)")
             };
             chlorophyllSprite = Content.Load<Texture2D>("Perm Evolutions/Chlorophyll");
+            instructionsTexture = Content.Load<Texture2D>("Other Textures/instructions");
         }
 
         protected override void Update(GameTime gameTime)
@@ -699,6 +701,8 @@ namespace Final_Project
             {
                 _spriteBatch.Draw(heartSprite, new Vector2(10 + i * 40, 1), null, Color.White, 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
             }
+
+            _spriteBatch.Draw(instructionsTexture, new Rectangle(10, vp.Height - 100, 180, 70), Color.White);
 
             int minutes = (int)(timeAlive / 60f);
             int seconds = (int)(timeAlive % 60f);
