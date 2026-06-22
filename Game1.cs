@@ -51,7 +51,7 @@ namespace Final_Project
         MouseState prevMouseState;
         Rectangle evoBtnRect;
 
-        // Evolution menu button rectangles
+        
         Rectangle levelUpBtn;
         Rectangle flagellaBtn;
         Rectangle chlorophyllBtn;
@@ -535,7 +535,7 @@ namespace Final_Project
             {
                 var vp = GraphicsDevice.Viewport;
 
-                // Set evolution menu button rectangles (class-level fields)
+              
                 levelUpBtn = new Rectangle(50, 110, 160, 200);
                 flagellaBtn = new Rectangle(230, 110, 160, 200);
                 chlorophyllBtn = new Rectangle(410, 110, 160, 200);
@@ -569,9 +569,9 @@ namespace Final_Project
                     }
                     else if (chlorophyllBtn.Contains(mouseState.Position) && !hasChlorophyll)
                     {backgroundMusic = Content.Load<Song>("YourMusicPath/backgroundMusic");
-deadMusic = Content.Load<Song>("YourMusicPath/deadMusic");
-loseHeartSound = Content.Load<SoundEffect>("YourSoundPath/loseHeart");
-evolveSound = Content.Load<SoundEffect>("YourSoundPath/evolve");
+                     deadMusic = Content.Load<Song>("YourMusicPath/deadMusic");
+                     loseHeartSound = Content.Load<SoundEffect>("YourSoundPath/loseHeart");
+                     evolveSound = Content.Load<SoundEffect>("YourSoundPath/evolve");
                         // Unlock chlorophyll
                         hasChlorophyll = true;
                         xpCurrent = 0;
@@ -739,20 +739,20 @@ evolveSound = Content.Load<SoundEffect>("YourSoundPath/evolve");
 
             if (evolutionMenuOpen)
             {
-                // Draw background menu
+                
                 if (evoMenuBgSprite != null)
                 {
                     _spriteBatch.Draw(evoMenuBgSprite, new Rectangle(0, 0, 800, 400), Color.White);
                 }
 
-                // Draw button outlines for testing
-                _spriteBatch.Draw(pixel, levelUpBtn, Color.Gray * 0.5f);
-                _spriteBatch.Draw(pixel, flagellaBtn, Color.Gray * 0.5f);
-                _spriteBatch.Draw(pixel, chlorophyllBtn, Color.Gray * 0.5f);
-                _spriteBatch.Draw(pixel, category4Btn, Color.Gray * 0.5f);
-                _spriteBatch.Draw(pixel, closeRect, Color.Gray * 0.5f);
+               
+                //_spriteBatch.Draw(pixel, levelUpBtn, Color.Gray * 0.5f);
+                //_spriteBatch.Draw(pixel, flagellaBtn, Color.Gray * 0.5f);
+                //_spriteBatch.Draw(pixel, chlorophyllBtn, Color.Gray * 0.5f);
+                //_spriteBatch.Draw(pixel, category4Btn, Color.Gray * 0.5f);
+                //_spriteBatch.Draw(pixel, closeRect, Color.Gray * 0.5f);
 
-                // Draw level up preview in first button
+                
                 if (currentLevel < maxLevel)
                 {
                     var previewSet = levelSpriteSets[currentLevel];
@@ -768,7 +768,7 @@ evolveSound = Content.Load<SoundEffect>("YourSoundPath/evolve");
                     }
                 }
 
-                // Draw flagella preview in second button
+                
                 if (flagellaSprites != null && flagellaSprites.Length > 0)
                 {
                     var ftex = flagellaSprites[0];
@@ -780,7 +780,7 @@ evolveSound = Content.Load<SoundEffect>("YourSoundPath/evolve");
                     _spriteBatch.Draw(ftex, new Rectangle(fx, fy, fw, fh), flagellaColor);
                 }
 
-                // Draw chlorophyll preview in third button
+                
                 if (chlorophyllSprite != null)
                 {
                     float pad = 16f;
@@ -795,7 +795,7 @@ evolveSound = Content.Load<SoundEffect>("YourSoundPath/evolve");
                     _spriteBatch.Draw(chlorophyllSprite, new Rectangle(cx, cy, cw, ch), chlorophyllColor);
                 }
 
-                // Draw close button
+                
                 if (evoCloseSprite != null)
                 {
                     _spriteBatch.Draw(evoCloseSprite, new Rectangle(vp.Width - 50, 10, 40, 40), Color.White);
