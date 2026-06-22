@@ -43,7 +43,7 @@ namespace Final_Project
             }
         }
 
-        // lifeMin and lifeMax are optional; when provided they override the randomized short lifetime used by default
+        
         public void SpawnAt(Vector2 pos, int count, Color color, float size = 4f, float lifeMin = -1f, float lifeMax = -1f)
         {
             for (int i = 0; i < count; i++)

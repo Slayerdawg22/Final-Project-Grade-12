@@ -10,7 +10,7 @@ namespace Final_Project
         private readonly RockManager rockManager;
         private readonly FoodManager foodManager;
         private readonly int chunkSize;
-        private readonly int loadRadius; // how many chunks away from player to load
+        private readonly int loadRadius; 
         private readonly Dictionary<Point, Chunk> loaded = new Dictionary<Point, Chunk>();
 
         public ChunkManager(RockManager rocks, FoodManager foods, int chunkSize = 1024, int loadRadius = 1)
@@ -25,7 +25,7 @@ namespace Final_Project
         {
             Point playerChunk = WorldToChunk(playerWorldPos);
 
-            // ensure surrounding chunks are loaded
+           
             var required = new HashSet<Point>();
             for (int dx = -loadRadius; dx <= loadRadius; dx++)
             for (int dy = -loadRadius; dy <= loadRadius; dy++)
@@ -33,7 +33,6 @@ namespace Final_Project
                 required.Add(new Point(playerChunk.X + dx, playerChunk.Y + dy));
             }
 
-            // unload chunks not required
             var toUnload = new List<Point>();
             foreach (var kv in loaded)
             {

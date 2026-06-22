@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Final_Project
 {
-    // Enemy virus controlled by WASD for testing. Uses the same nucleus behavior as the Cell.
+    
     public class Virus : INucleated
     {
         private Texture2D[] sprites;
@@ -21,7 +21,7 @@ namespace Final_Project
         private float animationTimer = 0f;
         private float animationSpeed = 0.15f;
 
-        // Implemented as properties to satisfy INucleated
+        
         public Vector2 Position { get; set; }
         public Vector2 Velocity { get; set; }
         public float Speed = 2.4f;
@@ -56,7 +56,7 @@ namespace Final_Project
 
         public void HandleInput()
         {
-            // kept for testing/debugging but not used by AI by default
+            
             KeyboardState k = Keyboard.GetState();
             Vector2 v = Vector2.Zero;
             if (k.IsKeyDown(Keys.W)) v.Y = -Speed;
@@ -77,7 +77,7 @@ namespace Final_Project
             }
         }
 
-        // Update with optional target (cell center). If target provided and virus is active it will follow the target.
+        
         public void Update(GameTime gameTime, Vector2? target = null)
         {
             UpdateAnimation(gameTime);
@@ -90,7 +90,7 @@ namespace Final_Project
 
             if (target.HasValue)
             {
-                // move towards the target
+                
                 var tex = sprites[spriteIndex];
                 float w = tex.Width * Scale;
                 float h = tex.Height * Scale;
