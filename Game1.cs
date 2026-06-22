@@ -47,11 +47,19 @@ namespace Final_Project
         float flagellaReturnSmoothing = 0.05f;
         MouseState prevMouseState;
         Rectangle evoBtnRect;
+
+        // Evolution menu button rectangles
+        Rectangle levelUpBtn;
+        Rectangle flagellaBtn;
+        Rectangle chlorophyllBtn;
+        Rectangle category4Btn;
+        Rectangle closeRect;
+
         int prevBackWidth = 0;
         int prevBackHeight = 0;
         bool resizedForMenu = false;
 
-        int xpCurrent = 800;
+        int xpCurrent = 0;
         int xpToNext = 800;
         int xpBarWidth = 250;
         int xpBarHeight = 10;
@@ -79,6 +87,8 @@ namespace Final_Project
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
+            _graphics.PreferredBackBufferWidth = 800;
+            _graphics.PreferredBackBufferHeight = 400;
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
         }
@@ -255,6 +265,16 @@ namespace Final_Project
                                 cell.SetSprites(levelSpriteSets[currentLevel - 1], newScale);
                                 float multiplier = 2f;
                                 xpToNext = Math.Max(xpToNext + 1, (int)(xpToNext * multiplier));
+
+                                Rectangle cellBounds = cell.Bounds;
+                                Vector2 cellCenter = new Vector2(cellBounds.X + cellBounds.Width / 2f, cellBounds.Y + cellBounds.Height / 2f);
+                                for (int angle = 0; angle < 360; angle += 15)
+                                {
+                                    float rad = (float)(angle * Math.PI / 180);
+                                    float radius = Math.Max(cellBounds.Width, cellBounds.Height) * 0.5f + 20f;
+                                    Vector2 particlePos = cellCenter + new Vector2((float)Math.Cos(rad), (float)Math.Sin(rad)) * radius;
+                                    particleManager.SpawnAt(particlePos, 2, Color.LimeGreen, 5f, 0.6f, 1.0f);
+                                }
                             }
                             xpCurrent = 0;
                             xpFull = false;
@@ -450,13 +470,13 @@ namespace Final_Project
             }
 
             prevKeyboardState = ks;
-            //var ms = Mouse.GetState();
+            var mouseState = Mouse.GetState();
             if (!evolutionMenuOpen && xpFull)
             {
-                evoBtnRect = new Rectangle(560, 420, 125, 50);
-                if (ms.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
+                evoBtnRect = new Rectangle(560, 340, 125, 50);
+                if (mouseState.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
                 {
-                    if (evoBtnRect.Contains(ms.Position))
+                    if (evoBtnRect.Contains(mouseState.Position))
                     {
                         evolutionMenuOpen = true;
                     }
@@ -467,22 +487,20 @@ namespace Final_Project
             {
                 var vp = GraphicsDevice.Viewport;
 
-                // Hard-coded button rectangles: 4 categories, 20 pixels apart, centered lower, 200 pixels tall
-                Rectangle levelUpBtn = new Rectangle(30, 110, 180, 200);
-                Rectangle flagellaBtn = new Rectangle(230, 110, 180, 200);
-                Rectangle chlorophyllBtn = new Rectangle(430, 110, 180, 200);
-                Rectangle category4Btn = new Rectangle(630, 110, 180, 200);
+                // Set evolution menu button rectangles (class-level fields)
+                levelUpBtn = new Rectangle(50, 110, 160, 200);
+                flagellaBtn = new Rectangle(230, 110, 160, 200);
+                chlorophyllBtn = new Rectangle(410, 110, 160, 200);
+                category4Btn = new Rectangle(590, 110, 160, 200);
+                closeRect = new Rectangle(vp.Width - 50, 10, 40, 40);
 
-                // Exit button: 40x40 at top right corner
-                Rectangle closeRect = new Rectangle(vp.Width - 50, 10, 40, 40);
-
-                if (ms.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
+                if (mouseState.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
                 {
-                    if (closeRect.Contains(ms.Position))
+                    if (closeRect.Contains(mouseState.Position))
                     {
                         evolutionMenuOpen = false;
                     }
-                    else if (levelUpBtn.Contains(ms.Position) && currentLevel < maxLevel)
+                    else if (levelUpBtn.Contains(mouseState.Position) && currentLevel < maxLevel)
                     {
                         // Level up the cell
                         currentLevel++;
@@ -493,7 +511,7 @@ namespace Final_Project
                         xpFull = false;
                         evolutionMenuOpen = false;
                     }
-                    else if (flagellaBtn.Contains(ms.Position) && !hasFlagella)
+                    else if (flagellaBtn.Contains(mouseState.Position) && !hasFlagella)
                     {
                         // Unlock flagella
                         hasFlagella = true;
@@ -501,7 +519,7 @@ namespace Final_Project
                         xpFull = false;
                         evolutionMenuOpen = false;
                     }
-                    else if (chlorophyllBtn.Contains(ms.Position) && !hasChlorophyll)
+                    else if (chlorophyllBtn.Contains(mouseState.Position) && !hasChlorophyll)
                     {
                         // Unlock chlorophyll
                         hasChlorophyll = true;
@@ -563,7 +581,7 @@ namespace Final_Project
                 Vector2 cCenter = cell.Position + new Vector2(cb.Width / 2f, cb.Height / 2f);
                 float radius = Math.Max(cb.Width, cb.Height) * 0.5f;
                 Vector2 dir = new Vector2((float)Math.Cos(flagellaAngle), (float)Math.Sin(flagellaAngle));
-                // Calculate flagella scale: base scale * 1.25^(currentLevel-1) for 25% growth per level
+                
                 float flagellaScale = flagellaBaseScale * (float)Math.Pow(1.25f, currentLevel - 1);
                 float spriteHalfHeight = (fb.Height * flagellaScale) * 0.5f;
                 float placeDist = Math.Max(0f, radius + spriteHalfHeight - 2f - 10f);
@@ -579,7 +597,7 @@ namespace Final_Project
                 var cb2 = cell.Bounds;
                 Vector2 cCenter2 = cell.Position + new Vector2(cb2.Width / 2f, cb2.Height / 2f);
                 float radius2 = Math.Max(cb2.Width, cb2.Height) * 0.5f;
-                float angle = MathHelper.ToRadians(400f); // Bottom-right corner (~45 degrees)
+                float angle = MathHelper.ToRadians(400f); 
                 Vector2 dir2 = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
 
                 int destW = Math.Max(1, chlorophyllSprite.Width / 8);
@@ -623,7 +641,7 @@ namespace Final_Project
 
             if (xpFull)
             {
-                evoBtnRect = new Rectangle(560, 420, 125, 50);
+                evoBtnRect = new Rectangle(560, 340, 125, 50);
                 if (evoButtonSprite != null)
                 {
                     _spriteBatch.Draw(evoButtonSprite, evoBtnRect, Color.White);
@@ -638,11 +656,12 @@ namespace Final_Project
                     _spriteBatch.Draw(evoMenuBgSprite, new Rectangle(0, 0, 800, 400), Color.White);
                 }
 
-                // Hard-coded button rectangles: 4 categories, 20 pixels apart, centered lower, 200 pixels tall
-                Rectangle levelUpBtn = new Rectangle(30, 110, 180, 200);
-                Rectangle flagellaBtn = new Rectangle(230, 110, 180, 200);
-                Rectangle chlorophyllBtn = new Rectangle(430, 110, 180, 200);
-                Rectangle category4Btn = new Rectangle(630, 110, 180, 200);
+                // Draw button outlines for testing
+                _spriteBatch.Draw(pixel, levelUpBtn, Color.Gray * 0.5f);
+                _spriteBatch.Draw(pixel, flagellaBtn, Color.Gray * 0.5f);
+                _spriteBatch.Draw(pixel, chlorophyllBtn, Color.Gray * 0.5f);
+                _spriteBatch.Draw(pixel, category4Btn, Color.Gray * 0.5f);
+                _spriteBatch.Draw(pixel, closeRect, Color.Gray * 0.5f);
 
                 // Draw level up preview in first button
                 if (currentLevel < maxLevel)
