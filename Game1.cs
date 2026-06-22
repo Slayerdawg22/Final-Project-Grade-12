@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
+using Microsoft.Xna.Framework.Audio;
 using System;
 using System.Collections.Generic;
 
@@ -28,6 +30,7 @@ namespace Final_Project
         Texture2D endScreenTexture;
 
         Texture2D xpBarEmptySprite;
+        SpriteFont gameFont;
 
         bool xpFull = false;
         bool evolutionMenuOpen = false;
@@ -60,12 +63,20 @@ namespace Final_Project
         bool resizedForMenu = false;
 
         int xpCurrent = 0;
-        int xpToNext = 800;
+        int xpToNext = 600;
         int xpBarWidth = 250;
         int xpBarHeight = 10;
         int xpBarInset = 4;
         int xpBarInnerOffsetX = 6;
         int xpBarInnerOffsetY = 6;
+
+        float timeAlive = 0f;
+        int prevLives = 3;
+
+        Song backgroundMusic;
+        Song deadMusic;
+        SoundEffect loseHeartSound;
+        SoundEffect evolveSound;
 
         FoodManager foodManager;
         Texture2D pixel;
@@ -103,6 +114,10 @@ namespace Final_Project
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+            backgroundMusic = Content.Load<Song>("Music/MainMenuMusic");
+            deadMusic = Content.Load<Song>("Music/DeadScreen");
+            loseHeartSound = Content.Load<SoundEffect>("Sound Effects/heartlost");
+            evolveSound = Content.Load<SoundEffect>("Sound Effects/Evolve");
 
             titleScreenTexture = Content.Load<Texture2D>("BackGrounds/StartScreen");
             endScreenTexture = Content.Load<Texture2D>("BackGrounds/DeadScreen");
@@ -126,6 +141,7 @@ namespace Final_Project
 
             heartSprite = Content.Load<Texture2D>("Other Textures/life");
             xpBarEmptySprite = Content.Load<Texture2D>("Other Textures/XpBar");
+            gameFont = Content.Load<SpriteFont>("Fonts/Arial.spritefont");
             {
                 int maxDesiredWidth = 300;
                 int desiredWidth = Math.Min(xpBarEmptySprite.Width, maxDesiredWidth);
@@ -206,6 +222,7 @@ namespace Final_Project
                     xpCurrent = 0;
                     xpFull = false;
                     currentLevel = 1;
+                    timeAlive = 0f;
                     cell.SetSprites(levelSpriteSets[currentLevel - 1], baseCellScale);
                 }
                 prevMouseState = ms;
@@ -226,6 +243,7 @@ namespace Final_Project
                     xpCurrent = 0;
                     xpFull = false;
                     currentLevel = 1;
+                    timeAlive = 0f;
                     cell.SetSprites(levelSpriteSets[currentLevel - 1], baseCellScale);
                     cell.Position = new Vector2(300, 300);
                     virus.Deactivate();
@@ -257,43 +275,64 @@ namespace Final_Project
                     if (msEarly.LeftButton == ButtonState.Pressed && prevMouseState.LeftButton == ButtonState.Released)
                     {
                         if (firstColRect.Contains(msEarly.Position))
-                        {
-                            if (currentLevel < maxLevel)
-                            {
-                                currentLevel++;
-                                float newScale = baseCellScale + (currentLevel - 1) * 0.06f;
-                                cell.SetSprites(levelSpriteSets[currentLevel - 1], newScale);
-                                float multiplier = 2f;
-                                xpToNext = Math.Max(xpToNext + 1, (int)(xpToNext * multiplier));
-
-                                Rectangle cellBounds = cell.Bounds;
-                                Vector2 cellCenter = new Vector2(cellBounds.X + cellBounds.Width / 2f, cellBounds.Y + cellBounds.Height / 2f);
-                                for (int angle = 0; angle < 360; angle += 15)
                                 {
-                                    float rad = (float)(angle * Math.PI / 180);
-                                    float radius = Math.Max(cellBounds.Width, cellBounds.Height) * 0.5f + 20f;
-                                    Vector2 particlePos = cellCenter + new Vector2((float)Math.Cos(rad), (float)Math.Sin(rad)) * radius;
-                                    particleManager.SpawnAt(particlePos, 2, Color.LimeGreen, 5f, 0.6f, 1.0f);
+                                    if (currentLevel < maxLevel)
+                                    {
+                                        currentLevel++;
+                                        float newScale = baseCellScale + (currentLevel - 1) * 0.06f;
+                                        cell.SetSprites(levelSpriteSets[currentLevel - 1], newScale);
+                                        float multiplier = 2f;
+                                        xpToNext = Math.Max(xpToNext + 1, (int)(xpToNext * multiplier));
+
+                                        Rectangle cellBounds = cell.Bounds;
+                                        Vector2 cellCenter = new Vector2(cellBounds.X + cellBounds.Width / 2f, cellBounds.Y + cellBounds.Height / 2f);
+                                        for (int angle = 0; angle < 360; angle += 15)
+                                        {
+                                            float rad = (float)(angle * Math.PI / 180);
+                                            float radius = Math.Max(cellBounds.Width, cellBounds.Height) * 0.5f + 20f;
+                                            Vector2 particlePos = cellCenter + new Vector2((float)Math.Cos(rad), (float)Math.Sin(rad)) * radius;
+                                            particleManager.SpawnAt(particlePos, 2, Color.LimeGreen, 5f, 0.6f, 1.0f);
+                                        }
+
+                                        if (evolveSound != null)
+                                        {
+                                            evolveSound.Play();
+                                        }
+                                    }
+                                    xpCurrent = 0;
+                                    xpFull = false;
+                                    evolutionMenuOpen = false;
                                 }
-                            }
-                            xpCurrent = 0;
-                            xpFull = false;
-                            evolutionMenuOpen = false;
-                        }
                         else if (secondColRect.Contains(msEarly.Position))
                         {
-                            hasFlagella = true;
-                            cell.Speed *= 1.35f;
-                            xpCurrent = 0;
-                            xpFull = false;
-                            evolutionMenuOpen = false;
+                            if (!hasFlagella)
+                            {
+                                hasFlagella = true;
+                                cell.Speed *= 1.35f;
+                                xpCurrent = 0;
+                                xpFull = false;
+                                evolutionMenuOpen = false;
+
+                                if (evolveSound != null)
+                                {
+                                    evolveSound.Play();
+                                }
+                            }
                         }
                         else if (thirdColRect.Contains(msEarly.Position))
                         {
-                            hasChlorophyll = true;
-                            xpCurrent = 0;
-                            xpFull = false;
-                            evolutionMenuOpen = false;
+                            if (!hasChlorophyll)
+                            {
+                                hasChlorophyll = true;
+                                xpCurrent = 0;
+                                xpFull = false;
+                                evolutionMenuOpen = false;
+
+                                if (evolveSound != null)
+                                {
+                                    evolveSound.Play();
+                                }
+                            }
                         }
                     }
                 }
@@ -327,6 +366,7 @@ namespace Final_Project
             }
 
             cell.Update(gameTime);
+            timeAlive += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             if (hasFlagella && flagellaSprites != null && flagellaSprites.Length > 0)
             {
@@ -399,6 +439,14 @@ namespace Final_Project
                 if (distSq <= sumRadius * sumRadius)
                 {
                     particleManager.SpawnAt(vCenter, 48, Color.Red, 4f, 1.0f, 1.8f);
+
+                    if (currentLives > 0)
+                    {
+                        if (loseHeartSound != null)
+                        {
+                            loseHeartSound.Play();
+                        }
+                    }
 
                     currentLives = Math.Max(0, currentLives - 1);
                     if (currentLives <= 0)
@@ -520,7 +568,10 @@ namespace Final_Project
                         evolutionMenuOpen = false;
                     }
                     else if (chlorophyllBtn.Contains(mouseState.Position) && !hasChlorophyll)
-                    {
+                    {backgroundMusic = Content.Load<Song>("YourMusicPath/backgroundMusic");
+deadMusic = Content.Load<Song>("YourMusicPath/deadMusic");
+loseHeartSound = Content.Load<SoundEffect>("YourSoundPath/loseHeart");
+evolveSound = Content.Load<SoundEffect>("YourSoundPath/evolve");
                         // Unlock chlorophyll
                         hasChlorophyll = true;
                         xpCurrent = 0;
@@ -531,6 +582,36 @@ namespace Final_Project
             }
 
             prevMouseState = Mouse.GetState();
+
+            if (gameState == GameState.Playing)
+            {
+                if (backgroundMusic != null && MediaPlayer.State != MediaState.Playing)
+                {
+                    MediaPlayer.IsRepeating = true;
+                    MediaPlayer.Play(backgroundMusic);
+                }
+            }
+            else if (gameState == GameState.GameOver)
+            {
+                if (backgroundMusic != null)
+                {
+                    MediaPlayer.Stop();
+                }
+                if (deadMusic != null && MediaPlayer.State != MediaState.Playing)
+                {
+                    MediaPlayer.IsRepeating = true;
+                    MediaPlayer.Play(deadMusic);
+                }
+            }
+            else if (gameState == GameState.TitleScreen)
+            {
+                if (backgroundMusic != null || deadMusic != null)
+                {
+                    MediaPlayer.Stop();
+                }
+            }
+
+            prevLives = currentLives;
 
             base.Update(gameTime);
         }
@@ -581,7 +662,7 @@ namespace Final_Project
                 Vector2 cCenter = cell.Position + new Vector2(cb.Width / 2f, cb.Height / 2f);
                 float radius = Math.Max(cb.Width, cb.Height) * 0.5f;
                 Vector2 dir = new Vector2((float)Math.Cos(flagellaAngle), (float)Math.Sin(flagellaAngle));
-                
+
                 float flagellaScale = flagellaBaseScale * (float)Math.Pow(1.25f, currentLevel - 1);
                 float spriteHalfHeight = (fb.Height * flagellaScale) * 0.5f;
                 float placeDist = Math.Max(0f, radius + spriteHalfHeight - 2f - 10f);
@@ -593,15 +674,15 @@ namespace Final_Project
 
             if (hasChlorophyll && chlorophyllSprite != null)
             {
-                
                 var cb2 = cell.Bounds;
                 Vector2 cCenter2 = cell.Position + new Vector2(cb2.Width / 2f, cb2.Height / 2f);
                 float radius2 = Math.Max(cb2.Width, cb2.Height) * 0.5f;
                 float angle = MathHelper.ToRadians(400f); 
                 Vector2 dir2 = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
 
-                int destW = Math.Max(1, chlorophyllSprite.Width / 8);
-                int destH = Math.Max(1, chlorophyllSprite.Height / 8);
+                float chlorophyllScale = flagellaBaseScale * 0.75f * (float)Math.Pow(1.25f, currentLevel - 1);
+                int destW = Math.Max(1, (int)(chlorophyllSprite.Width * chlorophyllScale));
+                int destH = Math.Max(1, (int)(chlorophyllSprite.Height * chlorophyllScale));
                 float placeDist2 = radius2 - (destH * 0.5f) - 10f;
                 Vector2 place2 = cCenter2 + dir2 * placeDist2;
                 int drawX = (int)(place2.X - destW / 2f);
@@ -617,6 +698,14 @@ namespace Final_Project
             for (int i = 0; i < currentLives; i++)
             {
                 _spriteBatch.Draw(heartSprite, new Vector2(10 + i * 40, 1), null, Color.White, 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+            }
+
+            int minutes = (int)(timeAlive / 60f);
+            int seconds = (int)(timeAlive % 60f);
+            string timeText = $"Time Survived: {minutes}:{seconds:D2}";
+            if (gameFont != null)
+            {
+                _spriteBatch.DrawString(gameFont, timeText, new Vector2(vp.Width - 170, 10), Color.White);
             }
 
             int barX = (vp.Width - xpBarWidth) / 2;
@@ -687,7 +776,8 @@ namespace Final_Project
                     int fh = Math.Min(flagellaBtn.Height - 20, ftex.Height);
                     int fx = flagellaBtn.X + (flagellaBtn.Width - fw) / 2;
                     int fy = flagellaBtn.Y + (flagellaBtn.Height - fh) / 2;
-                    _spriteBatch.Draw(ftex, new Rectangle(fx, fy, fw, fh), Color.White);
+                    Color flagellaColor = hasFlagella ? Color.Gray : Color.White;
+                    _spriteBatch.Draw(ftex, new Rectangle(fx, fy, fw, fh), flagellaColor);
                 }
 
                 // Draw chlorophyll preview in third button
@@ -701,7 +791,8 @@ namespace Final_Project
                     int ch = Math.Max(1, (int)(chlorophyllSprite.Height * scaleC));
                     int cx = chlorophyllBtn.X + (chlorophyllBtn.Width - cw) / 2;
                     int cy = chlorophyllBtn.Y + (chlorophyllBtn.Height - ch) / 2;
-                    _spriteBatch.Draw(chlorophyllSprite, new Rectangle(cx, cy, cw, ch), Color.White);
+                    Color chlorophyllColor = hasChlorophyll ? Color.Gray : Color.White;
+                    _spriteBatch.Draw(chlorophyllSprite, new Rectangle(cx, cy, cw, ch), chlorophyllColor);
                 }
 
                 // Draw close button

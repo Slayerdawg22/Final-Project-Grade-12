@@ -61,6 +61,13 @@
 /processorParam:TextureFormat=Color
 /build:Cell Textures/nucleus.png
 
+#begin Fonts/Arial.spritefont.spritefont
+/importer:FontDescriptionImporter
+/processor:LocalizedFontProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Fonts/Arial.spritefont.spritefont
+
 #begin Foods/XFood2.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -277,6 +284,18 @@
 /processorParam:TextureFormat=Color
 /build:Level 4 Cell Textures/Lvl4Cell(3).png
 
+#begin Music/DeadScreen.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Music/DeadScreen.mp3
+
+#begin Music/MainMenuMusic.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Music/MainMenuMusic.mp3
+
 #begin Other Textures/ConfirmBtn.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -456,6 +475,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Rocks/VertRock(2).png
+
+#begin Sound Effects/Evolve.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sound Effects/Evolve.wav
+
+#begin Sound Effects/heartlost.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sound Effects/heartlost.wav
 
 #begin Virus Textures/VirusBase(1).png
 /importer:TextureImporter
